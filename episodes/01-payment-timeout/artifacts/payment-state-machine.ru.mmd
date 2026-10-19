@@ -1,0 +1,15 @@
+%% Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.
+%% Case: 01; Author: Yulia Melekhova; Version: 0.3; Language: ru; Status: Draft
+stateDiagram-v2
+    direction TB
+    [*] --> CREATED
+    CREATED --> PROCESSING: Dispatch intent persisted
+    CREATED --> FAILED: Definitive local rejection
+    PROCESSING --> OUTCOME_UNKNOWN: Ambiguous result or overdue
+    PROCESSING --> SUCCEEDED: Verified final success
+    PROCESSING --> FAILED: Verified final failure
+    OUTCOME_UNKNOWN --> PROCESSING: Verified current pending
+    OUTCOME_UNKNOWN --> SUCCEEDED: Verified final success
+    OUTCOME_UNKNOWN --> FAILED: Verified failure or final NOT_EXECUTED
+    SUCCEEDED --> [*]
+    FAILED --> [*]

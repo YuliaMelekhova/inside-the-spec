@@ -1,0 +1,7 @@
+%% Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.
+%% Case: 01; Author: Yulia Melekhova; Version: 0.3; Language: ru; Status: Draft
+stateDiagram-v2
+    [*] --> NONE
+    NONE --> OPEN: First review item opened
+    OPEN --> RESOLVED: All open items resolved
+    RESOLVED --> OPEN: New evidence requires review

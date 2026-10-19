@@ -1,0 +1,26 @@
+ID,Situation,Expected behavior,Additional CREATE
+IM-01,"New key, valid data",One operation,Initial call
+IM-02,Retry in `CREATED`,Same ID; dispatch owner picks up initial send,Only the initial call not yet performed
+IM-03,Retry in `PROCESSING`,"`202`, API-01 PaymentStatus; client uses GET",None due to client retry
+IM-04,Retry in `OUTCOME_UNKNOWN`,`202`; continue recovery,Only under IC-07–IC-09
+IM-05,"Same key, different parameters",`409 IDEMPOTENCY_KEY_REUSED`,None
+IM-06,Concurrent identical requests,One ID,One initial call
+IM-07,Concurrent different payloads with one key,Accept one; return `409` for the other,For the accepted operation
+IM-08,Retry after success,Same success and credit state,None
+IM-09,Retry after failure,Same failure,None
+IM-10,Unknown; lookup `NOT_FOUND`; open window,Stay unknown until evidence arrives,"One, if budget remains"
+IM-11,Retried create is ambiguous again,Lookup and incoming confirmations only,None
+IM-12,Lookup `NOT_FOUND` after cutoff,Unknown and review,None
+IM-13,"New key matches unresolved payment, regardless of age",`409` with existing PaymentStatus and SHOW_EXISTING_PAYMENT,None
+IM-14,"Crash after dispatch, before response",Find attempt; start recovery,Within the shared budget
+IM-15,Two recovery workers,One reserved attempt,Within the shared budget
+IM-16,Success while preparing retry,Cancel an unstarted send if success is already visible; process result,An already dispatched retry is safe only under PA-01
+IM-17,Repeated success webhook,"One application, one logical task",None
+IM-18,Successful payment; credit incomplete,Recover credit by `payment_id`,None
+IM-19,Storage unavailable before save,`503`; no call,None
+IM-20,Old client-key binding legitimately deleted,Request may be new; recheck guard,Initial call possible
+IM-21,Proven nonacceptance with `429`,Defer using Retry-After; honor remaining budget,At most one retry
+IM-22,Webhook and lookup report the same success,One transition and one logical task,None
+IM-23,Webhook and lookup report different final outcomes,Retain first accepted final state; open conflict,None
+IM-24,Late success during `RESULT_OVERDUE`,Success; close only overdue item; assess other reasons,None
+IM-25,New key after 6 minutes or 24 hours; previous payment unknown,Guard still blocks; return existing operation,None

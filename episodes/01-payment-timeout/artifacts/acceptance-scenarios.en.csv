@@ -1,0 +1,41 @@
+ID,Given / When,Then,References
+AC-01,Two concurrent requests with one key and data,"One `payment_id`, one initial CREATE","IC-01–IC-06, IM-06"
+AC-02,Same key; amount changes from 5000 to 6000,`409`; original operation unchanged,"IC-03, IM-05"
+AC-03,"CREATE timeout, lookup `NOT_FOUND`, single retry also times out",Unknown; exactly two reserved CREATE attempts; no more CREATE,"ST-04, IC-08, IM-11"
+AC-04,First CREATE unknown; retry receives proven nonacceptance with `429`,Remain unknown; no third CREATE,"Appendix B, IC-08"
+AC-05,First CREATE proven not accepted with `429`; Retry-After=30 seconds,No retry before 30 seconds; same provider key,"IC-08, IM-21"
+AC-06,Retry-After delays eligibility past one hour or cutoff,No CREATE; retain review and observation,"IC-09, ST-15"
+AC-07,Lookup `NOT_FOUND` after 24 hours,Unknown; no new provider key or CREATE,"ST-10, IM-12"
+AC-08,Only overdue review is open; verified success arrives,`SUCCEEDED`; overdue closed; one credit task,"ST-06, IM-24, CR-01"
+AC-09,Overdue and security hold open; success arrives,"`SUCCEEDED`; overdue closed, security hold open; credit review","Appendix A, CR-01"
+AC-10,Last hold removed from a successful payment,"`PENDING`; one logical task, even on repeated command processing",CR-01
+AC-11,Invalid webhook signature with a known payment ID,Payment and holds unchanged; `401` and security event,"ST-16, Appendix C"
+AC-12,"Event over a day old, delivered with fresh valid signature",Business-event age alone is not a rejection reason,Appendix C
+AC-13,"Valid webhook repeated with new timestamp, same ID and body",`2xx`; no repeated business effect,"ST-12, IM-17"
+AC-14,Two different signed payloads with one event ID,Preserve conflict; do not automatically apply second payload,Appendix C
+AC-15,Inbox unavailable,`503`; notification is not acknowledged as accepted,Appendix C
+AC-16,Concurrent success and `PENDING`,"Final success, one posting","ST-13, ST-17, IM-22"
+AC-17,Concurrent verified success and failure,One final state; conflict open; no automatic posting reversal,"ST-14, IM-23"
+AC-18,Balance posting created; response lost; delivery repeats,"One posting, then `POSTED`","IC-11, Appendix D"
+AC-19,"Worker crashes after success commit, before dispatch",Task retained; restart resumes delivery,"ST-06, CR-01"
+AC-20,Outbox exists; hold opens before dispatch reservation,No balance call; `REVIEW_REQUIRED`,CR-01
+AC-21,Hold opens after balance call starts; posting is confirmed,`POSTED`; review remains; no promise to revoke the call,Appendix D
+AC-22,Two new keys with matching attributes arrive together while the original is unresolved,One operation; second request gets `409 POSSIBLE_DUPLICATE_PAYMENT`,"Duplicate guard, IM-13"
+AC-23,New key after 6 minutes; first payment unknown,"Still 409; return existing PaymentStatus, no second payment","IM-25, API-01"
+AC-24,Storage unavailable before attempt reservation,No provider call,IC-10
+AC-25,"Worker lost after saving attempt, before network call",Budget slot not automatically restored; unresolved attempt,"IC-13, Appendix E"
+AC-26,"30 days elapsed, but review open or posting unconfirmed",Do not delete client-key binding,Retention
+AC-27,Five consecutive balance-service 5xx responses,Breaker open; tasks retained; probe after 30 seconds,Appendix D
+AC-28,Workers unavailable for 10 minutes after success,Payment retained; overdue credit counts as an SLO miss if in denominator,Appendix D
+AC-29,Each nonfinal state is returned by POST replay,202 and the complete API-01 DTO; client stops POST and uses bounded GET,"API-01, IC-04, ST-11"
+AC-30,GET returns a known nonfinal payment,200 with the same DTO; HTTP 200 is not financial success,API-01
+AC-31,Duplicate guard rejects a new key,409 with existing_operation and SHOW_EXISTING_PAYMENT; no new key binding,"API-01, IM-13"
+AC-32,Matching payment is unknown for 24 hours,Guard remains active; no second CREATE due to a new client key,IM-25
+AC-33,Worker read task; hold commits before dispatch authorization,Shared row lock orders commits; no balance call,CR-02
+AC-34,Dispatch authorized; hold commits before physical send,Authorized attempt may execute; no strict revocation claimed,CR-02
+AC-35,Initial balance response is lost; no hold exists,Retry same payment_id; at most one posting,"CR-02, IC-11"
+AC-36,Signed webhook has no event_id,"400, no application; trusted lookup for recovery",Appendix C
+AC-37,Captured valid delivery replayed within 300 seconds,Same inbox identity; no repeated effect,Appendix C
+AC-38,Daily report has no matching row or is incomplete,"Keep unknown, guard, owner, and next action",RC-05
+AC-39,Final NOT_EXECUTED covers every attempt and seals reference,FAILED with evidence; atomically release guard and resolve case,"PA-08, ST-18, RC-06"
+AC-40,Daily reconciliation run repeats or unresolved case reaches 7 days,"No duplicate resolution effects; age escalates, never fabricates failure","RC-03, RC-08"

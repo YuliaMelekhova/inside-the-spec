@@ -1,0 +1,13 @@
+%% Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.
+%% Case: 01; Author: Yulia Melekhova; Version: 0.3; Language: en; Status: Draft
+flowchart TD
+    P["Verified provider success"] --> T["Atomic payment DB transaction"]
+    T --> S["payment_status = SUCCEEDED"]
+    S --> G{"Blocking review open?"}
+    G -->|Yes| H["credit_status = REVIEW_REQUIRED"]
+    G -->|No| O["credit_status = PENDING + outbox"]
+    H -->|Last hold resolved| O
+    O --> A{"Dispatch authorization with shared row lock"}
+    A -->|Hold already committed| H
+    A -->|Authorized| B["Balance DB: unique posting by payment_id"]
+    B --> C["Confirmed posting: credit_status = POSTED"]

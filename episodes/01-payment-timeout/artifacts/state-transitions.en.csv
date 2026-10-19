@@ -1,0 +1,19 @@
+ID,From,Condition,To,Action
+ST-01,No operation,Valid new key; duplicate guard permits creation,`CREATED`,"Atomically bind key, fingerprint, and operation"
+ST-02,`CREATED`,Dispatch owner saves intent,`PROCESSING`,"Save reference, provider key, and attempt before the call"
+ST-03,`CREATED`,Definitive local rejection before dispatch intent,`FAILED`,Save reason; no external call
+ST-04,`PROCESSING`,"Timeout, ambiguous response, undocumented 5xx",`OUTCOME_UNKNOWN`,Save classification; schedule lookup
+ST-05,`PROCESSING`,An unfinished create attempt is found after a crash,`OUTCOME_UNKNOWN`,Recover using the same reference and key
+ST-06,`PROCESSING` / `OUTCOME_UNKNOWN`,Verified final success,`SUCCEEDED`,Save evidence; apply credit gate CR-01
+ST-07,`PROCESSING` / `OUTCOME_UNKNOWN`,Verified final failure,`FAILED`,Save evidence; no balance credit
+ST-08,`OUTCOME_UNKNOWN`,Verified current `PENDING`,`PROCESSING`,Continue observation; do not create a new payment
+ST-09,`PROCESSING`,No final outcome by the next check deadline,`OUTCOME_UNKNOWN`,Run lookup; open review at one hour
+ST-10,Nonfinal,"Lookup returns `NOT_FOUND`, timeout, or error",Unchanged,A lookup error does not establish the create outcome
+ST-11,Any,Same client key and fingerprint,Unchanged,Return API-01 PaymentStatus; POST 202 nonfinal / 200 final
+ST-12,Final,Same final result again,Unchanged,Deduplicate; do not repeat business effects
+ST-13,Final,Old `PENDING` or timeout,Unchanged,Save observation
+ST-14,Final,Contradictory final result,Unchanged,Open `CONFLICTING_FINAL_RESULTS`; hold credit dispatch that has not started
+ST-15,Nonfinal,"No result after one hour, or safe recovery is blocked",Unchanged,Open `RESULT_OVERDUE` or `RECOVERY_BLOCKED`; exhausting the create budget alone does not stop lookup
+ST-16,Any,Untrusted message or parameter mismatch,Unchanged,Reject application; record anomaly
+ST-17,Any,Version conflict during concurrent processing,Reevaluate,Reload operation; reevaluate the original evidence
+ST-18,Nonfinal,Verified final NOT_EXECUTED under PA-08,`FAILED`,"Save proof, close supported overdue/reconciliation case, and release guard atomically; no credit"

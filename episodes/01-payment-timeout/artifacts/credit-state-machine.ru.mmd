@@ -1,0 +1,11 @@
+%% Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.
+%% Case: 01; Author: Yulia Melekhova; Version: 0.3; Language: ru; Status: Draft
+stateDiagram-v2
+    [*] --> NOT_REQUESTED
+    NOT_REQUESTED --> PENDING: Success and no hold
+    NOT_REQUESTED --> REVIEW_REQUIRED: Success with hold
+    PENDING --> POSTED: Verified balance posting
+    PENDING --> REVIEW_REQUIRED: Hold or delivery failure
+    REVIEW_REQUIRED --> PENDING: Hold resolved and delivery enabled
+    REVIEW_REQUIRED --> POSTED: In-flight posting confirmed
+    POSTED --> [*]
