@@ -1,4 +1,4 @@
-# Table notes: acceptance-scenarios.en.csv
+# Table notes: state-transitions.en.csv
 
 Series: Inside the Spec  
 Subtitle: Realistic Scenarios. Working Artifacts. Decisions That Matter.  
@@ -12,7 +12,7 @@ Status: Published on GitHub
 
 Exact table export from specification v0.4. The specification defines its conditions and exceptions.
 
-[CSV](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/episodes/01-payment-timeout/artifacts/acceptance-scenarios.en.csv) · [Specification](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/episodes/01-payment-timeout/artifacts/specification.en.md) · [Metadata](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/episodes/01-payment-timeout/artifacts/README.md)
+[CSV](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/cases/01-payment-timeout/artifacts/state-transitions.en.csv) · [Specification](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/cases/01-payment-timeout/artifacts/specification.en.md) · [Metadata](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/cases/01-payment-timeout/artifacts/README.md)
 
 UTF-8; comma delimiter; CSV quoting.
 
