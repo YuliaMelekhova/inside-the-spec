@@ -1,0 +1,18 @@
+%% Inside the Spec – Realistic Scenarios. Working Artifacts. Decisions That Matter.
+%% Case: 01; Author: Yulia Melekhova; Version: 0.4; Language: en; Status: Draft
+stateDiagram-v2
+    [*] --> NOT_REQUESTED
+    NOT_REQUESTED --> PENDING: Success without blocking review
+    NOT_REQUESTED --> REVIEW_REQUIRED: Success with blocking review
+    PENDING --> REVIEW_REQUIRED: Hold before authorization
+    REVIEW_REQUIRED --> PENDING: Last blocker resolved
+    PENDING --> DISPATCHING: Dispatch authorized atomically
+    OUTCOME_UNKNOWN --> DISPATCHING: Safe redelivery without hold
+    DISPATCHING --> POSTED: Verified posting
+    DISPATCHING --> OUTCOME_UNKNOWN: Lost response or worker
+    DISPATCHING --> PENDING: All attempts proven no effect and no hold
+    DISPATCHING --> REVIEW_REQUIRED: All attempts proven no effect with hold
+    OUTCOME_UNKNOWN --> POSTED: Posting verified by lookup
+    OUTCOME_UNKNOWN --> PENDING: All attempts proven no effect and no hold
+    OUTCOME_UNKNOWN --> REVIEW_REQUIRED: All attempts proven no effect with hold
+    POSTED --> [*]

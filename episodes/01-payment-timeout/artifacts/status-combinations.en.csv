@@ -1,0 +1,8 @@
+payment_status,credit_status,Open blocking reason,Meaning / constraint
+CREATED / PROCESSING / OUTCOME_UNKNOWN,NOT_REQUESTED,Either,No credit authorization before verified payment success
+FAILED,NOT_REQUESTED,Either,No credit for this failed payment; FAILED + POSTED is forbidden
+SUCCEEDED,PENDING,No,Durable task ready; no authorized attempt may still post
+SUCCEEDED,REVIEW_REQUIRED,Yes,New dispatch blocked and no authorized attempt may still post
+SUCCEEDED,DISPATCHING,Either,An authorized attempt is active; a later hold cannot revoke it
+SUCCEEDED,OUTCOME_UNKNOWN,Either,"An authorized attempt may have posted; hold pauses new sends, not read-only reconciliation"
+SUCCEEDED,POSTED,Either,Verified posting exists; subsequent review does not erase this fact
