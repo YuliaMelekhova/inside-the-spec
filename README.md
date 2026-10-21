@@ -4,7 +4,7 @@ Realistic Scenarios. Working Artifacts. Decisions That Matter.
 
 [English](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/README.md) · [Русский](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/README.ru.md)
 
-Practical systems analysis cases with worked examples, editable artifacts, and testable specifications. Companion materials for Yulia Melekhova’s LinkedIn series.
+Practical systems analysis cases with worked examples, editable artifacts, and testable specifications. Companion materials for Inside the Spec LinkedIn series.
 
 ## Cases
 
