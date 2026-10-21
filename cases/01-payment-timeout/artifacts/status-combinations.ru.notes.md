@@ -10,7 +10,7 @@ Status: Published on GitHub
 
 Точный экспорт таблицы M-01. Полные enum, вычисление блокирующих причин и недопустимые сочетания заданы в спецификации. Все неуказанные payment/credit сочетания запрещены.
 
-[CSV](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/episodes/01-payment-timeout/artifacts/status-combinations.ru.csv) · [Specification](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/episodes/01-payment-timeout/artifacts/specification.ru.md)
+[CSV](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/cases/01-payment-timeout/artifacts/status-combinations.ru.csv) · [Specification](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/cases/01-payment-timeout/artifacts/specification.ru.md)
 
 ---
 

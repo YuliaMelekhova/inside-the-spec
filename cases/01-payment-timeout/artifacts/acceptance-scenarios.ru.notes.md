@@ -1,4 +1,4 @@
-# Пояснения к таблице: idempotency-matrix.ru.csv
+# Пояснения к таблице: acceptance-scenarios.ru.csv
 
 Series: Inside the Spec  
 Subtitle: Realistic Scenarios. Working Artifacts. Decisions That Matter.  
@@ -12,7 +12,7 @@ Status: Published on GitHub
 
 Точная выгрузка таблицы из полной спецификации v0.4. Условия и исключения определены в спецификации.
 
-[CSV](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/episodes/01-payment-timeout/artifacts/idempotency-matrix.ru.csv) · [Specification](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/episodes/01-payment-timeout/artifacts/specification.ru.md) · [Metadata](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/episodes/01-payment-timeout/artifacts/README.ru.md)
+[CSV](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/cases/01-payment-timeout/artifacts/acceptance-scenarios.ru.csv) · [Specification](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/cases/01-payment-timeout/artifacts/specification.ru.md) · [Metadata](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/cases/01-payment-timeout/artifacts/README.ru.md)
 
 UTF-8; comma delimiter; CSV quoting.
 
