@@ -4,7 +4,7 @@ Realistic Scenarios. Working Artifacts. Decisions That Matter.
 
 [English](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/README.md) · [Русский](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/README.ru.md)
 
-Практические кейсы системного анализа: рабочие ситуации, редактируемые артефакты и проверяемые правила. Материалы к серии публикаций Юлии Мелеховой в LinkedIn.
+Практические кейсы системного анализа: рабочие ситуации, редактируемые артефакты и проверяемые правила. Материалы к серии публикаций Inside the Spec в LinkedIn.
 
 ## Кейсы
 
