@@ -3,12 +3,12 @@
 Series: Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.  
 Case: 02  
 Author: Yulia Melekhova  
-Version: 0.3  
+Version: 0.4  
 Language: en  
 Status: Draft
 
 ## Purpose
-Use this illustrative specification to review status meaning, ownership, and aggregation across a return workflow. Version 0.3 addresses the review of the initial draft; it is not a description of a deployed integration.
+Use this illustrative specification to review status meaning, ownership, and aggregation across a return workflow. Version 0.4 includes explicit lookup and finance-delivery policies; it is not a description of a deployed integration.
 
 ## Scope and actors
 One return contains one item, one inspection, and at most one full refund of USD 80.00. OMS manages the request and owns trusted object linkage and expected refund amount. WMS owns inspection evidence. PSP owns refund-processing evidence. The integration holds a derived read projection, not a new business authority.
@@ -108,6 +108,9 @@ Thresholds are explicit illustrative assumptions, not provider SLAs. Timers use 
 Switching between AWAITING_CONFIRMATION and REFUND_NOT_CONFIRMED does not reset the shared timer. Remaining in any timed state also does not reset its timer. Leaving a timer group closes its interval; later re-entry starts a new interval, while any already open operations case is retained and updated. REFUND_PROCESSING uses its own policy deadline anchored to the first valid PSP PENDING observation, even if D04 or D01 currently masks it. REFUND_ISSUED monitoring is anchored to first valid PSP COMPLETED evidence on the same basis. Repeated snapshots and UI projection changes never reset these deadlines. See operational-contract.md for the precedence of these source-fact monitors over display-state timers. Re-baseline uses these same rules.
 
 Open operations cases have a four-hour review deadline from creation. If unresolved at that deadline, escalate to the owning team lead and record the next four-hour review deadline. An external recovery handoff requires an accepting owner and case reference; it does not relabel the original refund as successful. Handoffs and escalations are persisted, deduplicated, and auditable. These non-payment task-review targets are case assumptions to replace with agreed operational targets before deployment. Payment processing and visibility deadlines use the mandatory versioned policy profile, not these fixed task-review intervals.
+
+## Recovery policy detail
+operational-contract.md defines independent lookup retries while UNCERTAIN, provider/account outage handling, finance acceptance deadlines, parking, and backlog monitoring. Safe lookup can continue under manual ownership. No unaccepted financial exception is removed by TTL. A broker acknowledgment does not establish finance ownership. These operational additions do not change mapping_version=0.3 or D01–D09.
 
 ## Audit and boundaries
 Record raw event, source identity, revision, outcome, mapping_version, before/after facts, triggering decision, projection, flags, timer interval, task references, and corrective evidence. Restrict raw events and reconciliation details to authorized staff.

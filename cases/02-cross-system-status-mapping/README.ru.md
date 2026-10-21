@@ -6,7 +6,7 @@ Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.
 
 One Status, Three Systems, Different Meanings
 
-Ветка для ревью · спецификация v0.3. Пост еще не опубликован в LinkedIn.
+Ветка для ревью · спецификация v0.4. Пост еще не опубликован в LinkedIn.
 
 Учебный возврат товара между OMS, WMS и PSP. Общие технические артефакты на английском; русские пояснения помогают их читать.
 
@@ -24,7 +24,7 @@ One Status, Three Systems, Different Meanings
 - [Правила использования словаря](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/status-mapping.notes.md)
 - [Тексты интерфейса EN/RU](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/display-mapping.md)
 - [Отправка, дедлайны и финансовые исключения](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/operational-contract.md)
-- [88 приемочных сценариев](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/acceptance-scenarios.md)
+- [100 приемочных сценариев](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/acceptance-scenarios.md)
 - [64 комбинации состояний](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/decision-combinations.csv)
 - [Границы проверки модели](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/combination-check.notes.md)
 - [Воспроизводимая проверка модели](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/verify.py)
@@ -37,3 +37,4 @@ One Status, Three Systems, Different Meanings
 [All cases](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/README.md) · [Yulia Melekhova on LinkedIn](https://www.linkedin.com/in/yuliamelekhova)
 
 [PDF export validation](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/pdf-validation.md)
+

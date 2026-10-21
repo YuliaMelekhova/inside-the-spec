@@ -20,4 +20,4 @@ Each case states its assumptions and boundaries. Acceptance scenarios define exp
 
 | Case | Topic | EN | RU | Status |
 |---|---|---|---|---|
-| 02 | Cross-System Status Mapping | [English](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/README.md) | [Русский](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/README.ru.md) | Review branch · v0.3 |
+| 02 | Cross-System Status Mapping | [English](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/README.md) | [Русский](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/README.ru.md) | Review branch · v0.4 |

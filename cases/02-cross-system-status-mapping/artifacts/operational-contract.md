@@ -3,7 +3,7 @@
 Series: Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.  
 Case: 02  
 Author: Yulia Melekhova  
-Version: 0.3  
+Version: 0.4  
 Language: en  
 Status: Draft
 
@@ -36,6 +36,19 @@ The provider contract must define key scope, retention, parameter matching, conc
 
 Pin a retry policy with max_create_attempts, maximum_elapsed_time, backoff schedule, and jitter bounds. Limit all retries by dedupe_valid_until as well. Exhaustion opens MANUAL_REVIEW with a payments owner, preserving uncertainty; it does not set PSP FAILED. Serialize dispatch locally and fence stale local updates, but do not treat a local lease as protection against an already-running remote request.
 
+## Lookup recovery while UNCERTAIN
+A failed status query is not a failed refund and does not authorize another create. On lookup timeout, connection failure, or retryable 5xx, preserve UNCERTAIN and schedule another read. A single transient lookup failure does not create an individual manual-review task. Query attempts have their own query_attempt_count, last_query_at, next_query_at, last_query_error, and query_deadline, separate from create attempts and dedupe_valid_until.
+
+Pin lookup_policy_id/version with request_timeout, initial_backoff, max_backoff, jitter bounds, query_review_after, per-provider/account rate and concurrency limits, and circuit-breaker settings. For transient attempt n, use ceiling=min(max_backoff, initial_backoff×2^(n−1)); draw the delay from the configured jitter range. Persist the selected next_query_at, including across restarts. A valid 429 Retry-After is a lower bound on the next call. A definitive business response follows adapter rules; an eventual-consistency 'not found' preserves uncertainty and follows the scheduled-read policy.
+
+Illustrative LOOKUP_TEST_V1: timeout 10 seconds; initial retry ceiling 30 seconds, doubling to 15 minutes; jitter 50–100%; review deadline four elapsed hours after first UNCERTAIN entry. Later lookup failures, worker restarts, MANUAL_REVIEW, and projection changes do not reset that deadline. An unresolved deadline creates or updates the owned operations case and marks dispatch MANUAL_REVIEW. Safe reads continue at the capped schedule; manual ownership is not a polling stop condition. An expired create-idempotency guarantee may prohibit create and require manual review earlier, without prohibiting safe status reads.
+
+The illustrative circuit opens after five retryable lookup failures for a provider/account within 60 seconds, waits 60 seconds, then admits one half-open probe. A valid authoritative response closes it; another transient failure reopens it. An open circuit suspends network calls, not durable scheduling, and cannot reset operation deadlines. Enforce the configured request budget during recovery. Production thresholds and limits must be agreed with the provider; absent limits block worker activation and raise a configuration incident.
+
+Aggregate a provider outage into one provider/account incident. Each affected operation retains a durable link, uncertainty age, deadline, and owner; query failures must not create one new ticket per attempt. An operation crossing its review deadline becomes an overdue item in that case or a deduplicated individual case if no provider incident exists. Payments operations owns the case and escalates every four hours while unresolved. On recovery, fan reads back in at the configured rate rather than releasing all queued queries at once.
+
+A valid linked provider object resolves dispatch uncertainty by recording its native binding and ACKNOWLEDGED; its business snapshot still passes the normal identity/content/revision rules. Stop uncertainty-specific polling once that resolution is committed and continue normal pending/issuance monitoring as applicable. A concurrent late query error cannot undo acknowledgment. Authentication failures pause the affected lookup channel for configuration repair and create an immediate incident. A missing lookup capability or irrecoverable identity problem requires manual resolution; do not keep issuing invalid queries.
+
 ## Financial exception boundary
 Re-baseline changes an observation in the read projection; it is not a money movement, accounting reversal, or permission to recover money from a customer. Do not block recording truthful source evidence merely because ERP is unavailable.
 
@@ -46,6 +59,21 @@ Finance operations owns the receiving case. The receiving ledger/ERP process det
 If the finance service is unavailable, persist the correction and pending handoff locally, retain the reconciliation flag, retry the finance outbox, and escalate to finance operations after the existing four-hour case-review deadline. A normal late failure may show REFUND_FAILED immediately when D02 is false, while its payments/finance case stays open. For re-baseline, the parent reconciliation case cannot close until finance has accepted ownership; substantive ledger completion may remain tracked in that accepted finance case. D02 must also be false before its projection flag clears. Acknowledging the handoff alone does not erase a remaining business contradiction.
 
 Any recovery, compensation, or write-off requires an authorized business/accounting decision. A warehouse rejection does not by itself establish a collectible debt or prove defective goods. Historical events and journal entries are never overwritten by re-baseline.
+
+## Finance-outbox delivery policy
+The persisted finance exception and its outbox entry form one local transaction with the correction. A broker acknowledgment confirms transport only. FINANCE_ACCEPTED requires an authenticated, correctly correlated receiver acknowledgment containing financial_exception_id, accepting finance owner, and finance_case_id. Ledger references or a documented no-posting decision are recorded when available; acceptance of ownership is distinct from accounting completion.
+
+Store delivery_state (READY, IN_FLIGHT, RETRY_WAIT, PARKED, FINANCE_ACCEPTED), delivery_attempt_count, first_pending_at, last_attempt_at, next_attempt_at, lease_token/lease_until, last_error_class, broker_ack_at, finance_accepted_at, and the pinned delivery_policy_id/version. Apply acknowledgment and retry updates under a version check: a late sender timeout cannot regress FINANCE_ACCEPTED. Lost acknowledgment triggers re-delivery or receiver lookup using the same financial_exception_id. The receiver must return the existing case and avoid duplicate financial effects.
+
+Delivery policy declares request_timeout, initial_backoff, max_backoff, jitter bounds, lease duration, per-destination concurrency/rate limits, warning_age, acceptance_deadline, and escalation_interval. Missing policy blocks activation of the delivery worker and raises a configuration incident; locally persisted facts and outbox records remain durable. On timeout, connection failure, or retryable 5xx, persist RETRY_WAIT and next_attempt_at. Respect a valid Retry-After for 429; never retry sooner than that value. Delays do not move the original acceptance deadline. A leased attempt that crashes becomes eligible for recovery after lease expiry with the same exception ID.
+
+Illustrative FINANCE_TEST_V1: request timeout 10 seconds; lease 30 seconds; initial retry ceiling 5 seconds, doubling to 15 minutes; random delay between 50% and 100% of that ceiling; warning after 15 minutes; acceptance overdue after one elapsed hour. The overdue case belongs to finance operations and escalates to its lead every four hours while unresolved. These are explicit case assumptions, not production SLAs. Real concurrency/rate limits and retention must be supplied by the approved deployment policy.
+
+The warning, acceptance deadline, retry schedule, and retention are separate controls. No TTL may delete an unaccepted event. Crossing the acceptance deadline opens or updates an incident and retries continue at the bounded rate. Authentication/authorization errors pause the affected destination and create a configuration incident; do not hammer the endpoint. A deterministic schema or business rejection parks the record with its reason and owner. PARKED records remain included in backlog and aging metrics, and require an audited correction/replay. A dead-letter queue may implement parking only if the original payload, identity, and recovery path remain durable.
+
+Monitor pending_count (including PARKED), oldest_unaccepted_age, delivery_attempt_failures by destination/error class, parked_count, acceptance_latency, and the gap between broker acknowledgment and finance acceptance. Alert on the pinned age thresholds; expose depth and arrival/drain rates for capacity review. Deduplicate outage alerts by destination and unresolved incident, retaining affected exception IDs. Never treat a growing parked queue as a cleared delivery backlog.
+
+After recovery, drain with the same rate limits and per-event identities; compare local unaccepted IDs against receiver case acknowledgments. Close an overdue delivery incident only when its affected records are accepted or have been transferred through an audited durable recovery procedure with an accepting owner. A transfer does not falsely mark those records FINANCE_ACCEPTED. Remove accepted records only under the approved retention policy after audit evidence is preserved. Broker delivery or a local correction alone does not satisfy this condition.
 
 ## Extension boundary
 USD 80.00 is one worked amount. Validation compares events to the registered expected amount and currency; it must not hardcode 8000 or USD globally. A single-refund example at a different amount does not require new status enums.

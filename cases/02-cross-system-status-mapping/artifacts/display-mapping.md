@@ -3,7 +3,7 @@
 Series: Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.  
 Case: 02  
 Author: Yulia Melekhova  
-Version: 0.3  
+Version: 0.4  
 Language: en  
 Status: Draft
 

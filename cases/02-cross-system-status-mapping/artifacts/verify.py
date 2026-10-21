@@ -1,4 +1,4 @@
-"""Case 02 v0.3: finite projection model and document consistency checks.
+"""Case 02 v0.4: finite projection model and document consistency checks.
 This does not execute the integration acceptance scenarios.
 """
 from pathlib import Path
@@ -106,12 +106,12 @@ def main():
         writer.writerows(output)
     acceptance = (ART / 'acceptance-scenarios.md').read_text()
     ids = re.findall(r'^\| (AC-\d+) \|', acceptance, re.M)
-    assert ids == [f'AC-{i:02}' for i in range(1, 89)]
+    assert ids == [f'AC-{i:02}' for i in range(1, 101)]
     lengths = {}
     for lang in ('en', 'ru'):
         post = (ROOT / f'post.{lang}.md').read_text().strip()
         lengths[lang] = len(post)
-        assert len(post) < 3000 and '88' in post
+        assert len(post) < 3000 and '100' in post
         assert 'REFUND_ISSUED' in post and '#SystemIntegration' in post
     # Ensure every projection result has a bilingual display row.
     display = (ART / 'display-mapping.md').read_text()
@@ -121,7 +121,7 @@ def main():
 Series: Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.  
 Case: 02  
 Author: Yulia Melekhova  
-Version: 0.3  
+Version: 0.4  
 Language: en  
 Status: Draft
 
@@ -134,7 +134,7 @@ Report executed finite-model and document checks separately from specified integ
 - Enumerated 64 state tuples with no reconciliation flag and 64 D01 overrides: 128 model inputs.
 - Checked success prerequisites, rejection prerequisites, no-refund contradictions, and 9 manually specified outcomes.
 - All D02–D09 branches exercised. Counts: {dict(sorted(coverage.items()))}.
-- Verified AC-01 through AC-88 are present once and in order. These are not executed acceptance tests.
+- Verified AC-01 through AC-100 are present once and in order. These are not executed acceptance tests.
 - Checked every model result has a display mapping and draft relative links resolve.
 - Post lengths before final case URL: EN {lengths['en']}; RU {lengths['ru']} characters.
 - Checked authored Markdown, CSV, and Python for prohibited dash characters.
@@ -159,7 +159,7 @@ https://www.linkedin.com/in/yuliamelekhova
             for target in re.findall(r'\]\(([^)]+)\)', content):
                 if '://' not in target and not target.startswith('#'):
                     assert (path.parent / target.split('#')[0]).exists(), (path, target)
-    print(f'PASS: 128 model inputs, 9 manual outcomes, 88 scenario IDs; posts {lengths}')
+    print(f'PASS: 128 model inputs, 9 manual outcomes, 100 scenario IDs; posts {lengths}')
 
 
 if __name__ == '__main__':

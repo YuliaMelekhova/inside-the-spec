@@ -16,7 +16,7 @@ For an accepted item, a matching provider completion can establish REFUND_ISSUED
 
 Ordering matters too. With complete snapshots and a revision number per source object, a delayed PENDING cannot overwrite a newer COMPLETED. A later provider failure is a valid new outcome. Correcting a terminal warehouse result requires reconciliation that replaces the saved fact and revision.
 
-Case 02 includes one source-status dictionary, a decision table, an event contract, UI labels, and 88 acceptance scenarios. The scenarios specify expected behavior, not executed integration tests. A separate model check covers all 64 state combinations and reconciliation overrides.
+Case 02 includes one source-status dictionary, a decision table, an event contract, UI labels, and 100 acceptance scenarios. The scenarios specify expected behavior, not executed integration tests. A separate model check covers all 64 state combinations and reconciliation overrides.
 
 A useful review question: which system owns the evidence required for the status we show the customer?
 

@@ -3,7 +3,7 @@
 Series: Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.  
 Case: 02  
 Author: Yulia Melekhova  
-Version: 0.3  
+Version: 0.4  
 Language: en  
 Status: Draft
 
@@ -14,7 +14,7 @@ Both EN and RU exports contain 12 pages at 200 × 250 mm. The approved compact R
 
 Every page of each latest export was rasterized and visually inspected for text boundaries, Cyrillic, tables, cover identity, footer numbering, and resource placement. All prepared content blocks were matched against extracted PDF text. The case-specific, repository, and author PDF annotations were checked. The case index was fetched successfully from the review branch before its URL was configured.
 
-The PDFs summarize the case. Full behavior, event fields, operational rules, and all 88 expected acceptance scenarios are in the linked artifacts. This review does not establish that the integration has been implemented or tested.
+The PDFs summarize the case. Full behavior, event fields, operational rules, and all 100 expected acceptance scenarios are in the linked artifacts. This review does not establish that the integration has been implemented or tested.
 
 The editable HTML companion remains internal and was syntax-checked; its browser print output is not the validated PDF export.
 

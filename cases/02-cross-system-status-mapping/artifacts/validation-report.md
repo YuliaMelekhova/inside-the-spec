@@ -3,7 +3,7 @@
 Series: Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.  
 Case: 02  
 Author: Yulia Melekhova  
-Version: 0.3  
+Version: 0.4  
 Language: en  
 Status: Draft
 
@@ -16,9 +16,9 @@ Report executed finite-model and document checks separately from specified integ
 - Enumerated 64 state tuples with no reconciliation flag and 64 D01 overrides: 128 model inputs.
 - Checked success prerequisites, rejection prerequisites, no-refund contradictions, and 9 manually specified outcomes.
 - All D02–D09 branches exercised. Counts: {'D02': 23, 'D03': 3, 'D04': 22, 'D05': 3, 'D06': 3, 'D07': 3, 'D08': 3, 'D09': 4}.
-- Verified AC-01 through AC-88 are present once and in order. These are not executed acceptance tests.
+- Verified AC-01 through AC-100 are present once and in order. These are not executed acceptance tests.
 - Checked every model result has a display mapping and draft relative links resolve.
-- Post lengths before final case URL: EN 2574; RU 2709 characters.
+- Post lengths before final case URL: EN 2575; RU 2710 characters.
 - Checked authored Markdown, CSV, and Python for prohibited dash characters.
 
 ## Not verified by this script

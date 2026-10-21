@@ -3,7 +3,7 @@
 Series: Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.  
 Case: 02  
 Author: Yulia Melekhova  
-Version: 0.3  
+Version: 0.4  
 Language: en  
 Status: Draft
 
@@ -102,6 +102,18 @@ Unless overridden, events are complete, correctly linked, contract version 1, an
 | AC-86 | Out-of-scope partial aggregate | Two refund objects for one return under one-refund contract | Do not apply D01–D09 as a parent aggregate; require extended object/linkage model |
 | AC-87 | Issued state remains monitored | PSP COMPLETED accepted; provider later sends a failure event | Continue subscription and process event; issuance did not close ingestion |
 | AC-88 | Concurrent stale worker | Lease expires while original remote request may still run | Fence local writes; any create retry still requires provider concurrent-dedup guarantee |
+| AC-89 | Transient lookup failure | UNCERTAIN; first lookup times out or returns retryable 5xx | Keep uncertainty; schedule jittered retry; no new per-operation task yet |
+| AC-90 | Lookup throttling | 429 includes valid Retry-After later than computed retry | Do not query before Retry-After; keep original review deadline |
+| AC-91 | Lookup review deadline | UNCERTAIN remains for LOOKUP_TEST_V1 four hours | MANUAL_REVIEW and owned overdue item; safe polling continues |
+| AC-92 | Provider outage circuit | Five retryable lookup failures in 60 seconds for one account | Open circuit 60 seconds; one probe; aggregate incident; operation deadlines preserved |
+| AC-93 | Expired create retention with safe reads | Create guarantee expires; lookup remains available | No create retry; continue bounded read-only lookup with manual ownership |
+| AC-94 | Late query error after acknowledgment | Webhook binds object and ACKNOWLEDGED; older query then times out | Keep ACKNOWLEDGED; do not reopen uncertainty from the late error |
+| AC-95 | Broker acknowledgment only | Finance broker accepts message; receiver has not accepted ownership | Remain unaccepted; aging and acceptance deadline continue |
+| AC-96 | Finance delivery deadline | FINANCE_TEST_V1 one-hour deadline expires without receiver acceptance | Owned incident; bounded retries continue; do not delete event |
+| AC-97 | Poison finance record | Receiver deterministically rejects schema | PARKED with reason and owner; retain payload; include in backlog and oldest age |
+| AC-98 | Lost finance acknowledgment | Receiver already accepted; sender retries same financial_exception_id | Return existing case; no duplicate financial effects |
+| AC-99 | Late finance timeout | FINANCE_ACCEPTED committed; earlier sender timeout arrives | Do not regress accepted state or schedule another delivery |
+| AC-100 | Finance outage recovery | Destination recovers with parked/pending backlog | Rate-limited recovery; compare receiver acknowledgments; unaccepted records cannot expire |
 
 ---
 Inside the Spec · Real Scenarios. Working Artifacts. Decisions That Matter.
