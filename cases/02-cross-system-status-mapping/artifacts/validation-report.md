@@ -18,11 +18,11 @@ Report executed finite-model and document checks separately from specified integ
 - All D02–D09 branches exercised. Counts: {'D02': 23, 'D03': 3, 'D04': 22, 'D05': 3, 'D06': 3, 'D07': 3, 'D08': 3, 'D09': 4}.
 - Verified AC-01 through AC-88 are present once and in order. These are not executed acceptance tests.
 - Checked every model result has a display mapping and draft relative links resolve.
-- Post lengths before final case URL: EN 2415; RU 2546 characters.
+- Post lengths before final case URL: EN 2574; RU 2709 characters.
 - Checked authored Markdown, CSV, and Python for prohibited dash characters.
 
 ## Not verified by this script
-Transport, identity validation, event ingestion, concurrency, persistence, dispatch, clocks, escalation, and re-baseline have specified expectations but no integration implementation was executed. No PDF exports or visual layout validation were performed. No GitHub publication or live Case 02 URL is claimed.
+Transport, identity validation, event ingestion, concurrency, persistence, dispatch, clocks, escalation, and re-baseline have specified expectations but no integration implementation was executed. PDF layout validation is recorded separately in pdf-validation.md. This script does not verify remote publication status.
 
 ---
 Inside the Spec · Real Scenarios. Working Artifacts. Decisions That Matter.

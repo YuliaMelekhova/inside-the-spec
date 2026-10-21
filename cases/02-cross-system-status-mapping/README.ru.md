@@ -14,7 +14,7 @@ One Status, Three Systems, Different Meanings
 
 - [Post EN](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/post.en.md) · [Пост RU](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/post.ru.md)
 
-PDF готовятся в этой ветке.
+[PDF EN](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/carousel.en.pdf) · [PDF RU](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/carousel.ru.pdf)
 
 ## Рабочие артефакты
 
@@ -35,3 +35,5 @@ PDF готовятся в этой ветке.
 Проверка модели охватывает 128 входов: 64 сочетания состояний и 64 варианта с флагом сверки. Приемочные сценарии являются ожидаемым поведением, не выполненными интеграционными тестами.
 
 [All cases](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/README.md) · [Yulia Melekhova on LinkedIn](https://www.linkedin.com/in/yuliamelekhova)
+
+[PDF export validation](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/pdf-validation.md)

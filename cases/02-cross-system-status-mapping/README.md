@@ -14,7 +14,7 @@ An illustrative return workflow across OMS, WMS, and PSP. Shared technical artif
 
 - [Post EN](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/post.en.md) · [Пост RU](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/post.ru.md)
 
-PDF exports are being prepared in this branch.
+[PDF EN](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/carousel.en.pdf) · [PDF RU](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/carousel.ru.pdf)
 
 ## Working artifacts
 
@@ -35,3 +35,5 @@ PDF exports are being prepared in this branch.
 The model check covers 128 inputs: 64 state tuples and 64 reconciliation overrides. Acceptance scenarios are expected behavior, not executed integration tests.
 
 [All cases](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/README.md) · [Yulia Melekhova on LinkedIn](https://www.linkedin.com/in/yuliamelekhova)
+
+[PDF export validation](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/pdf-validation.md)

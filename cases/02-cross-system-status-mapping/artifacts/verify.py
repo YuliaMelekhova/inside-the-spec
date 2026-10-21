@@ -140,7 +140,7 @@ Report executed finite-model and document checks separately from specified integ
 - Checked authored Markdown, CSV, and Python for prohibited dash characters.
 
 ## Not verified by this script
-Transport, identity validation, event ingestion, concurrency, persistence, dispatch, clocks, escalation, and re-baseline have specified expectations but no integration implementation was executed. No PDF exports or visual layout validation were performed. No GitHub publication or live Case 02 URL is claimed.
+Transport, identity validation, event ingestion, concurrency, persistence, dispatch, clocks, escalation, and re-baseline have specified expectations but no integration implementation was executed. PDF layout validation is recorded separately in pdf-validation.md. This script does not verify remote publication status.
 
 ---
 Inside the Spec · Real Scenarios. Working Artifacts. Decisions That Matter.
