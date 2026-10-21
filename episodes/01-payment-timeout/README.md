@@ -13,6 +13,7 @@ This is an illustrative case. Specification version: 0.3. Status: Draft. The 40 
 | Material | Purpose |
 |---|---|
 | [Full specification](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/specification.en.md) | Four core artifacts, six appendices, and 40 acceptance scenarios |
+| [LinkedIn post draft](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/post.en.md) | Complete English publication text |
 | [PDF carousel](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/carousel.en.pdf) | Approved compact version, 13 pages |
 | [Editable tables and diagrams](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/README.md) | CSV and Mermaid exports with usage notes and limitations |
 
@@ -24,7 +25,7 @@ Start with the scenario and provider assumptions in the specification. Continue 
 
 ## Publication preparation
 
-This package is in a review branch. LinkedIn publication text has not been added yet. The PDF case link will be connected after the final case URL is verified; the current Full specification caption does not establish an active link.
+This package remains in a review branch. Complete LinkedIn post drafts are included in both languages. Each PDF full-specification link opens the verified case index in its language on this branch. Before release, merge the reviewed package and replace branch links with verified main-branch URLs. No LinkedIn publication is claimed.
 
 ---
 

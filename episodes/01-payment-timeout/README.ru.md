@@ -13,6 +13,7 @@ Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.
 | Материал | Назначение |
 |---|---|
 | [Полная спецификация](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/specification.ru.md) | Четыре основных артефакта, шесть приложений и 40 проверочных сценариев |
+| [Черновик поста LinkedIn](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/post.ru.md) | Полный русский текст публикации |
 | [PDF-карусель](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/carousel.ru.pdf) | Согласованная компактная версия, 13 страниц |
 | [Редактируемые таблицы и схемы](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/README.ru.md) | CSV и Mermaid с пояснениями и границами использования |
 
@@ -24,7 +25,7 @@ Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.
 
 ## Подготовка публикации
 
-Комплект находится в ветке для проверки. Тексты постов LinkedIn ещё не добавлены. Адрес страницы кейса в PDF подключим после проверки окончательного адреса; текущая подпись Full specification не подтверждает наличие активной ссылки.
+Комплект остаётся в ветке для проверки. Добавлены полные черновики постов LinkedIn на двух языках. Ссылка на полную спецификацию в каждом PDF открывает проверенную страницу кейса на соответствующем языке в этой ветке. Перед выпуском нужно слить проверенный комплект и заменить ссылки на проверенные адреса в main. Публикация в LinkedIn не выполнялась.
 
 ---
 
