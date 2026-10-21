@@ -20,6 +20,6 @@ Case 01 рассматривает одно пополнение: повторы
 
 В карусели показаны решения. На GitHub: полная спецификация, редактируемые таблицы и схемы, 58 проверочных сценариев. Они задают ожидаемое поведение, а не результаты тестов реализации. Гарантии реальной интеграции ещё нужно проверить.
 
-https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/README.ru.md
+Ссылки на материалы на английском и русском находятся в комментариях.
 
 #SystemsAnalysis #RequirementsEngineering #Payments

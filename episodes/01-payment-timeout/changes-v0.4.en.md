@@ -2,7 +2,7 @@
 
 Inside the Spec – Realistic Scenarios. Working Artifacts. Decisions That Matter.
 
-Status: Draft. The previous revision is retained in Git history.
+Status: Published on GitHub. The previous revision is retained in Git history.
 
 | Review point | Resolution |
 |---|---|
@@ -19,7 +19,7 @@ Status: Draft. The previous revision is retained in Git history.
 
 AC-01–AC-40 retain stable IDs with clarifications. AC-41–AC-58 cover new boundaries. These are expected results, not executed implementation tests. Provider and balance capabilities and the SLO remain unverified for a real integration.
 
-Both language carousels contain 15 pages at the agreed typography. Case links target this review branch until merge and a verified main-link update. No LinkedIn publication is claimed.
+Both language carousels contain 15 pages at the agreed typography. Release packaging connects verified main-branch links, moves material URLs from the posts to prepared EN/RU comments, and marks GitHub materials published. Technical behavior remains v0.4. LinkedIn publication is pending.
 
 ---
 

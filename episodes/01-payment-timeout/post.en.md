@@ -20,6 +20,6 @@ The credit goal includes progress: eventually exactly one posting, never more. T
 
 The carousel presents the decisions. GitHub contains the full specification, editable tables and diagrams, and 58 acceptance scenarios. These define expected behavior, not executed implementation tests. Real integration guarantees still need verification.
 
-https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/README.md
+Links to the English and Russian materials are in the comments.
 
 #SystemsAnalysis #RequirementsEngineering #Payments

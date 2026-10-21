@@ -6,7 +6,7 @@ Case: 01
 Author: Yulia Melekhova  
 Version: 0.4  
 Language: en  
-Status: Draft
+Status: Published on GitHub
 
 ## Purpose
 
