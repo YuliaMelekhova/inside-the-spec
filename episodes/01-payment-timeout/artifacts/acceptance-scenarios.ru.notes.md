@@ -6,13 +6,13 @@ Case: 01
 Author: Yulia Melekhova  
 Version: 0.4  
 Language: ru  
-Status: Draft
+Status: Published on GitHub
 
 ## Назначение
 
 Точная выгрузка таблицы из полной спецификации v0.4. Условия и исключения определены в спецификации.
 
-[CSV](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/acceptance-scenarios.ru.csv) · [Specification](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/specification.ru.md) · [Metadata](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/README.ru.md)
+[CSV](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/episodes/01-payment-timeout/artifacts/acceptance-scenarios.ru.csv) · [Specification](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/episodes/01-payment-timeout/artifacts/specification.ru.md) · [Metadata](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/episodes/01-payment-timeout/artifacts/README.ru.md)
 
 UTF-8; comma delimiter; CSV quoting.
 

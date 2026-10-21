@@ -6,7 +6,7 @@ Case: 01
 Author: Yulia Melekhova  
 Version: 0.4  
 Language: ru; технические идентификаторы на английском  
-Status: Draft
+Status: Published on GitHub
 
 ## Назначение
 

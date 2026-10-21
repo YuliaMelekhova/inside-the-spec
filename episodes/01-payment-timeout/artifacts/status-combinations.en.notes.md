@@ -6,11 +6,11 @@ Case: 01
 Version: 0.4  
 Language: en  
 Author: Yulia Melekhova  
-Status: Draft
+Status: Published on GitHub
 
 Exact export of M-01. The specification defines complete enums, derived blocking reasons, and forbidden combinations. Every unlisted payment/credit combination is forbidden.
 
-[CSV](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/status-combinations.en.csv) · [Specification](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/specification.en.md)
+[CSV](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/episodes/01-payment-timeout/artifacts/status-combinations.en.csv) · [Specification](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/episodes/01-payment-timeout/artifacts/specification.en.md)
 
 ---
 

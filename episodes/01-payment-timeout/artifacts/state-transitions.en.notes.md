@@ -6,13 +6,13 @@ Case: 01
 Author: Yulia Melekhova  
 Version: 0.4  
 Language: en  
-Status: Draft
+Status: Published on GitHub
 
 ## Purpose
 
 Exact table export from specification v0.4. The specification defines its conditions and exceptions.
 
-[CSV](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/state-transitions.en.csv) · [Specification](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/specification.en.md) · [Metadata](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/README.md)
+[CSV](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/episodes/01-payment-timeout/artifacts/state-transitions.en.csv) · [Specification](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/episodes/01-payment-timeout/artifacts/specification.en.md) · [Metadata](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/episodes/01-payment-timeout/artifacts/README.md)
 
 UTF-8; comma delimiter; CSV quoting.
 
