@@ -1,6 +1,6 @@
 # Inside the Spec
 
-Real Scenarios. Working Artifacts. Decisions That Matter.
+Realistic Scenarios. Working Artifacts. Decisions That Matter.
 
 [English](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/README.md) · [Русский](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/README.ru.md)
 
@@ -10,7 +10,7 @@ Practical systems analysis cases with worked examples, editable artifacts, and t
 
 | Case | Topic | EN | RU | Status |
 |---|---|---|---|---|
-| 01 | Payment Timeout | [English](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/README.md) | [Русский](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/README.ru.md) | Draft · v0.3 |
+| 01 | Payment Timeout | [English](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/README.md) | [Русский](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/README.ru.md) | Draft · v0.4 |
 
 Each case states its assumptions and boundaries. Acceptance scenarios define expected outcomes and do not establish implementation test results.
 

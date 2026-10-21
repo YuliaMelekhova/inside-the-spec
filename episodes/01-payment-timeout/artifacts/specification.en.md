@@ -1,10 +1,10 @@
 # Payment Timeout: States, Idempotency, and Recovery
 
 Series: Inside the Spec  
-Subtitle: Real Scenarios. Working Artifacts. Decisions That Matter.  
+Subtitle: Realistic Scenarios. Working Artifacts. Decisions That Matter.  
 Case: 01  
 Author: Yulia Melekhova  
-Version: 0.3  
+Version: 0.4  
 Language: en  
 Status: Draft
 
@@ -19,6 +19,9 @@ A user tops up a balance by €50: `amount_minor=5000`, `currency=EUR`. The crea
 This is an illustrative case with the assumptions below. It does not describe a particular provider's contract, a personal production incident, or an integration ready for deployment. All intervals and limits are design choices for this case, with no claimed measurements.
 
 Scope includes one provider, final payment outcomes, unknown outcomes, repeated requests, status lookup, manual review, delivery of balance-credit instructions, and a possible-duplicate check for a new client key.
+
+
+The case uses an instrument requiring no user interaction. €50 is an illustrative amount, not a claim about an EU card flow or SCA exemption. A flow requiring a 3DS/SCA challenge needs a separate specification.
 
 ### Provider Assumptions
 
@@ -41,7 +44,7 @@ Verify every assumption against the selected provider's contract before a real i
 |---|---|---|
 | `payment_status` | `CREATED`, `PROCESSING`, `OUTCOME_UNKNOWN`, `SUCCEEDED`, `FAILED` | Payment outcome known to our service |
 | `review_status` | `NONE`, `OPEN`, `RESOLVED` | Aggregate state of review items |
-| `credit_status` | `NOT_REQUESTED`, `PENDING`, `POSTED`, `REVIEW_REQUIRED` | Balance-credit state |
+| `credit_status` | `NOT_REQUESTED`, `PENDING`, `DISPATCHING`, `OUTCOME_UNKNOWN`, `REVIEW_REQUIRED`, `POSTED` | Balance-credit state |
 
 ```mermaid
 stateDiagram-v2
@@ -69,19 +72,41 @@ Final states do not change automatically. A contradictory final result opens a r
 
 ```mermaid
 flowchart TD
-    P["Verified provider success"] --> T["Atomic payment DB transaction"]
-    T --> S["payment_status = SUCCEEDED"]
-    S --> G{"Blocking review open?"}
-    G -->|Yes| H["credit_status = REVIEW_REQUIRED"]
-    G -->|No| O["credit_status = PENDING + outbox"]
-    H -->|Last hold resolved| O
-    O --> A{"Dispatch authorization with shared row lock"}
-    A -->|Hold already committed| H
-    A -->|Authorized| B["Balance DB: unique posting by payment_id"]
-    B --> C["Confirmed posting: credit_status = POSTED"]
+    S["Verified payment success"] --> G{"Blocking review open?"}
+    G -->|Yes| H["REVIEW_REQUIRED: no authorized attempt"]
+    G -->|No| Q["PENDING + durable outbox"]
+    H -->|Last blocker resolved| Q
+    Q --> A["Atomic authorization: DISPATCHING"]
+    A --> B["Balance: unique posting by payment_id"]
+    B -->|Verified posting| P["POSTED"]
+    A -->|Ambiguous result or worker lost| U["credit_status = OUTCOME_UNKNOWN"]
+    U -->|Read-only lookup verifies posting| P
+    U -->|No hold: safe same-ID redelivery| A
 ```
 
 The main view links payment success to review evaluation and credit initiation. Its outbox is local to the payment DB; the balance DB is a separate transaction. CR-01/CR-02 define atomicity and the dispatch boundary.
+
+### M-01. Related Statuses and Valid Combinations
+
+These are related state dimensions, not independent state machines. The full `credit_status` enum is `NOT_REQUESTED`, `PENDING`, `DISPATCHING`, `OUTCOME_UNKNOWN`, `REVIEW_REQUIRED`, `POSTED`. Qualify `OUTCOME_UNKNOWN` with its field name: payment uncertainty and credit uncertainty are different facts.
+
+`review_items` is the sole source of review reasons. `review_status` and `blocking_review_reasons` are derived in the same operation snapshot. The latter lists open reasons whose policy blocks new credit dispatch. `credit_status` describes credit progress and evidence; it is not a second editable hold flag. The transition handler derives it under the payment-row lock. `RESULT_OVERDUE` and `RECOVERY_BLOCKED` do not themselves block credit; `SECURITY_HOLD`, `PARAMETER_MISMATCH`, `CONFLICTING_FINAL_RESULTS`, and `CREDIT_DELIVERY_FAILED` do.
+
+| payment_status | credit_status | Open blocking reason | Meaning / constraint |
+|---|---|---|---|
+| CREATED / PROCESSING / OUTCOME_UNKNOWN | NOT_REQUESTED | Either | No credit authorization before verified payment success |
+| FAILED | NOT_REQUESTED | Either | No credit for this failed payment; FAILED + POSTED is forbidden |
+| SUCCEEDED | PENDING | No | Durable task ready; no authorized attempt may still post |
+| SUCCEEDED | REVIEW_REQUIRED | Yes | New dispatch blocked and no authorized attempt may still post |
+| SUCCEEDED | DISPATCHING | Either | An authorized attempt is active; a later hold cannot revoke it |
+| SUCCEEDED | OUTCOME_UNKNOWN | Either | An authorized attempt may have posted; hold pauses new sends, not read-only reconciliation |
+| SUCCEEDED | POSTED | Either | Verified posting exists; subsequent review does not erase this fact |
+
+All other payment/credit combinations are forbidden. Without a blocking reason, `review_status=OPEN` can coexist with `credit_status=PENDING` only for a nonblocking review, such as an unresolved configuration issue after payment success. With a blocking reason, `review_status` must be OPEN. With no open reason it is NONE or RESOLVED according to history. Success and its credit gate commit atomically, so SUCCEEDED + NOT_REQUESTED is not a committed state.
+
+Opening a blocking reason moves an unstarted PENDING task to REVIEW_REQUIRED. It never replaces DISPATCHING, OUTCOME_UNKNOWN, or POSTED. Removing the last hold changes REVIEW_REQUIRED to PENDING; an unknown credit remains unknown until evidence or a safe delivery resolves it. CR-01–CR-04 specify these transitions.
+
+`provider_operation_seen` is a persisted monotonic boolean. Any verified provider PENDING or final outcome sets it true atomically, even if the PENDING version is too old to change `payment_status`. Once true, all new provider CREATE authorizations are prohibited, including after a later NOT_FOUND or timeout. PROCESSING may mean dispatch uncertainty or confirmed pending; this explicit fact, not the status label alone, controls create eligibility.
 
 ## Artifact 2. State Transition Table
 
@@ -96,7 +121,7 @@ Each handler checks outcome evidence, the current state, and the operation versi
 | ST-05 | `PROCESSING` | An unfinished create attempt is found after a crash | `OUTCOME_UNKNOWN` | Recover using the same reference and key |
 | ST-06 | `PROCESSING` / `OUTCOME_UNKNOWN` | Verified final success | `SUCCEEDED` | Save evidence; apply credit gate CR-01 |
 | ST-07 | `PROCESSING` / `OUTCOME_UNKNOWN` | Verified final failure | `FAILED` | Save evidence; no balance credit |
-| ST-08 | `OUTCOME_UNKNOWN` | Verified current `PENDING` | `PROCESSING` | Continue observation; do not create a new payment |
+| ST-08 | `OUTCOME_UNKNOWN` | Verified current `PENDING` | `PROCESSING` | Persist provider_operation_seen=true; observe only; permanently prohibit new CREATE authorizations |
 | ST-09 | `PROCESSING` | No final outcome by the next check deadline | `OUTCOME_UNKNOWN` | Run lookup; open review at one hour |
 | ST-10 | Nonfinal | Lookup returns `NOT_FOUND`, timeout, or error | Unchanged | A lookup error does not establish the create outcome |
 | ST-11 | Any | Same client key and fingerprint | Unchanged | Return API-01 PaymentStatus; POST 202 nonfinal / 200 final |
@@ -135,19 +160,20 @@ The amount is an integer in minor units; currency is normalized to the agreed up
 | IC-05 | A client retry does not trigger an additional provider create |
 | IC-06 | One operation owner controls recovery; automatic HTTP-client, proxy, and SDK retries are disabled for create |
 | IC-07 | For an unknown outcome, run lookup before an eligible retry |
-| IC-08 | Reuse the same provider key and parameters; at most two create calls in total, including the initial call |
+| IC-08 | Reuse the same provider key and parameters; at most two create reservations in total, including the initial call; never reserve after provider_operation_seen=true |
 | IC-09 | Automatic create is prohibited after the local cutoff, regardless of lookup results |
 | IC-10 | Do not call the provider without a durable operation record and an attempt reservation |
 | IC-11 | The balance service atomically enforces at most one credit posting per `payment_id` |
 | IC-12 | A separate duplicate guard checks a new client key; a key alone does not prevent every semantic duplicate |
 | IC-13 | Before a retry, atomically reserve the remaining create budget and check state, ownership, holds, and cutoff |
+| IC-14 | Verified operation existence sets provider_operation_seen=true permanently; no subsequent CREATE authorization is allowed |
 
 ### Recovery Parameters
 
 | Parameter | Value in this case |
 |---|---|
 | CREATE / LOOKUP timeout | 10 seconds per call |
-| `recovery_started_at` | Time of the first unknown outcome or the first need to defer create after confirmed nonacceptance |
+| `recovery_started_at` | Fixed T0 at first ambiguity, verified nonfinal provider result, or deferred create after proven nonacceptance; see RP-01 |
 | Lookup schedule | 15 seconds, 1 minute, 5 minutes, 15 minutes, and 1 hour after `recovery_started_at` |
 | Missed deadlines | After restart, perform one current check; do not send a burst of missed calls |
 | Create budget | Initial call plus at most one automatic retry; `429` consumes the same budget |
@@ -157,13 +183,25 @@ The amount is an integer in minor units; currency is normalized to the agreed up
 | Cutoff | Strictly before `first_dispatch_at + 23 hours`; an additional safety boundary |
 | Late events | Continue receiving and verifying them after operator handoff |
 | Manual lookup / reconciliation | Operator lookup after one hour; daily registry reconciliation under Appendix F |
-| Client-key retention | At least 30 days and until all related uncertainty, credit delivery, and reviews are resolved, if longer |
+| Client-key retention | Entire operation lifetime; at least creation +30 days and last complete resolution +30 days; see KEY-01 |
 
 The 23-hour cutoff leaves a margin against PA-02. It is safe only when window semantics are verified and retry delivery delay is bounded by that margin. If that bound cannot be ensured, disable create retries; retain lookup and review.
 
 For proven nonacceptance with `429`, honor a valid `Retry-After`. Without it, delay the single retry by 2–4 seconds with jitter. For an unknown `429` outcome, Retry-After is a lower bound on retry timing, but lookup is still required. Cancel the retry if eligibility begins after one hour or the cutoff.
 
 Attempt reservation consumes the budget conservatively: a crash before the network call does not automatically restore the slot. Reduced availability is preferable to an unaccounted extra create.
+
+### RP-01. Recovery Clock and Create Safety
+
+T0 is the persisted recovery_started_at, fixed once at the first ambiguity, first verified nonfinal provider result, or first deferred create after proven nonacceptance. All lookup deadlines are absolute offsets from T0: T0+15 seconds, T0+60 seconds, T0+300 seconds, T0+900 seconds, T0+3600 seconds. They are not delays added to the previous call. A call may take up to 10 seconds. The independent T0+3600-second deadline opens overdue review and prohibits CREATE before starting that final lookup; it never waits for that lookup to finish. A late scheduler runs one current lookup, not a burst; T0 never resets.
+
+For an ambiguous earlier CREATE, the primary financial safety guarantee is PA-01: the unchanged provider key and parameters identify one operation even under concurrent delivery. NOT_FOUND is only a retry gate, never evidence of nonexecution. The optional lookup-free route requires every previous attempt to be contractually proven not accepted. Neither gate substitutes for PA-01 in the ambiguous route. In both routes check provider_operation_seen=false, total budget, owner, blockers, and both deadlines atomically. A later NOT_FOUND never clears provider_operation_seen.
+
+The one-hour deadline is the effective retry limit in the normal case; first_dispatch_at+23 hours is a defensive outer bound, normally unreachable. No manual path may bypass that outer bound. If concurrent provider idempotency or bounded delivery within its window cannot be verified, disable ambiguous CREATE retries and retain observation/reconciliation.
+
+### KEY-01. Client-Key Retention and Expiry
+
+Retain the key scope, fingerprint version/value, and payment_id for the entire retained operation lifetime. Minimum: 30 days from creation and 30 days after the last resolution of payment uncertainty, credit uncertainty/delivery, and all reviews, whichever is later. There is no TTL for unresolved operations, including at 7 days or after provider-window expiry. Restore jobs and keys together; a cleanup job must atomically verify final payment, settled credit lifecycle, and closed reviews. GET/status data and the replay binding remain available together. Only after the operation and its binding are legitimately purged may the old key be treated as new; do not promise lifetime replay after deletion. The API documents this retention policy, and clients must never intentionally recycle keys.
 
 ### Our API Responses
 
@@ -189,6 +227,7 @@ An illustrative nonfinal response:
   "payment_status": "PROCESSING",
   "credit_status": "NOT_REQUESTED",
   "review_status": "NONE",
+  "blocking_review_reasons": [],
   "status_url": "/payments/pay-001",
   "next_action": "WAIT",
   "poll_after_seconds": 5,
@@ -196,7 +235,7 @@ An illustrative nonfinal response:
 }
 ```
 
-All fields are required. Status fields use the enums in Artifact 1. `status_url` is an authenticated relative URL accessible only to the operation's owner. `next_action` is `CONTACT_SUPPORT` when a review is open; otherwise `WAIT` while the payment is nonfinal or credit is pending; otherwise `NONE`. `poll_after_seconds` is 5 for `WAIT` and null otherwise. `retry_post` is always false in a status response: use GET, not another create. These UI instructions do not replace authorization or concurrency checks.
+All fields, including the derived blocking_review_reasons array below, are required. Status fields use the enums in Artifact 1. `status_url` is an authenticated relative URL accessible only to the operation's owner. `next_action` follows the derived blockers and recovery policy below, not review_status alone. `poll_after_seconds` is 5 for `WAIT` and null otherwise. `retry_post` is always false in a status response: use GET, not another create. These UI instructions do not replace authorization or concurrency checks.
 
 The client stops create retries on any valid 202 or 200 status response. Foreground GET polling runs no more often than every 5 seconds, for at most 60 seconds; then it stops and leaves the operation visible for later refresh. Polling stops early for `CONTACT_SUPPORT` or `NONE`. A GET 200 is not itself proof of payment success. Network errors or 503 before an operation ID is known permit at most one automatic POST replay with the original key, then a visible recovery action; they never permit a new key. A known ID is recovered by GET. This client budget is separate from the provider CREATE budget.
 
@@ -212,6 +251,7 @@ The client stops create retries on any valid 202 or 200 status response. Foregro
     "payment_status": "OUTCOME_UNKNOWN",
     "credit_status": "NOT_REQUESTED",
     "review_status": "OPEN",
+    "blocking_review_reasons": [],
     "status_url": "/payments/pay-001",
     "next_action": "CONTACT_SUPPORT",
     "poll_after_seconds": null,
@@ -223,6 +263,12 @@ The client stops create retries on any valid 202 or 200 status response. Foregro
 `existing_operation` is the full `PaymentStatus` snapshot, not just an ID. The interface opens that operation and follows its next action; it does not generate another key or show the second request as accepted. A concurrent final result may make the snapshot stale; GET refreshes it. Each response includes `Cache-Control: no-store`; POST 202 also includes `Location` matching `status_url`. The request key and credentials are not echoed.
 
 The choice of 202 with a current status and monitor follows [RFC 9110, Section 15.3.3](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.3). Polling limits and DTO fields are design choices of this case, not requirements imposed by the RFC.
+
+The DTO also requires blocking_review_reasons, derived from open review_items in the same snapshot. A nonblocking OPEN review alone does not imply held credit. WAIT covers credit PENDING, DISPATCHING, or OUTCOME_UNKNOWN while automatic recovery remains active. CONTACT_SUPPORT applies to a blocking review or operational handoff; NONE applies only when no user follow-up is needed. On an unknown credit with a hold, display both uncertainty and paused new dispatch, never “not credited.”
+
+UI button rule: replay POST with the original key only when no valid status response or operation ID was received, within the client replay budget. Once a 202/200 PaymentStatus or existing_operation is received, replace “Try again” with “Check status” using GET of that payment. Do not start a new intent.
+
+HTTP choice: this case intentionally uses 409 for changed payload and 202 with PaymentStatus for an in-progress replay. This differs from the work-in-progress [IETF Idempotency-Key draft-07, Section 2.7](https://www.ietf.org/archive/id/draft-ietf-httpapi-idempotency-key-header-07.html#section-2.7), which recommends 422 and 409 respectively. This case does not claim conformance to that draft's error mapping.
 
 ### Duplicate Guard
 
@@ -237,6 +283,8 @@ Release the guard only when the original payment is definitively `SUCCEEDED` or 
 Different instruments, different amounts, and new top-ups after final success remain outside this guard. A new key after final success can still be a semantic duplicate; the interface shows the completed operation before presenting a new top-up action. This guard is not a complete fraud or duplicate-charge prevention system.
 
 ## Artifact 4. Idempotency Matrix
+
+Six minutes in IM-25 / AC-23 is an arbitrary age example beyond the old five-minute design, not a current expiry threshold. This version has no age-based guard release.
 
 | ID | Situation | Expected behavior | Additional CREATE |
 |---|---|---|---|
@@ -282,7 +330,7 @@ stateDiagram-v2
 |---|---|---|---|
 | `RESULT_OVERDUE` | Payment Operations | Not by itself | Automatically on a verified final result |
 | `RECOVERY_BLOCKED` | Payment Operations | Not by itself | Operator removes obstacle; final confirmation resolves only the unknown-outcome reason, not a configuration defect |
-| `CONFLICTING_FINAL_RESULTS` | Payment Operations | Yes, if credit dispatch has not started | Investigate evidence; ordinary handlers do not correct a final state |
+| `CONFLICTING_FINAL_RESULTS` | Payment Operations | Yes for new dispatch; no revocation of an authorized attempt | Investigate evidence; ordinary handlers do not correct a final state |
 | `PARAMETER_MISMATCH` | Payment Operations | Yes | Verify ownership, amount, and currency |
 | `SECURITY_HOLD` | Security Operations | Yes | Authorized staff remove hold with a recorded justification |
 | `CREDIT_DELIVERY_FAILED` | Balance Operations | Until cause is resolved | Recover task and confirm posting |
@@ -323,75 +371,87 @@ This is the chosen contract of an illustrative provider, without a claim that re
 | Deduplication | Unique `provider + event_id`; fingerprint original body |
 | Retention | Inbox and dedup markers for at least 30 days and until associated operations/reviews close, if longer |
 
-Order: limit size, validate headers and timestamp, verify signature over original bytes, parse payload, match merchant and operation, and durably save inbox. Return `2xx` after durable save, not after balance credit. Return `503` if inbox storage is unavailable; `401` for invalid signature or timestamp; `400` for malformed payload; and `413` for excess size.
+Order: limit size, validate header syntax, verify signature over original bytes, enforce delivery age, parse payload, correlate, then durably save inbox or authenticated quarantine under WH-01. Return `2xx` after durable save, not after balance credit. Return `503` if inbox storage is unavailable; `401` for invalid signature or timestamp; `400` for malformed payload; and `413` for excess size.
 
-An absent, empty, or invalid `event_id` is a schema error: return `400`, do not apply the event, and use trusted lookup for recovery. This case does not support providers without stable signed event identity. Replaying the same valid delivery within 300 seconds hits the unique inbox constraint and cannot repeat business effects. Hashing body plus delivery timestamp is not a substitute: the timestamp changes on legitimate redelivery. Body hash is used to detect conflicting payloads, not to invent business-event identity.
+An absent, empty, or invalid `event_id` is a schema error: durably quarantine authenticated evidence before `400`, do not apply the event, and use trusted lookup for recovery under WH-01. This case does not support providers without stable signed event identity. Replaying the same valid delivery within 300 seconds hits the unique inbox constraint and cannot repeat business effects. Hashing body plus delivery timestamp is not a substitute: the timestamp changes on legitimate redelivery. Body hash is used to detect conflicting payloads, not to invent business-event identity.
 
 An exact duplicate of a saved event receives `2xx`. If the same event ID has a different body with a valid signature, preserve both pieces of evidence, do not automatically apply the second, and record an anomaly. Return `2xx` after durable quarantine to avoid endless redelivery.
 
 A fresh signature does not make an event current in business terms. An old event with a fresh delivery is acceptable; assess its transition under ST-08 and ST-12–ST-14. After dedup retention expires, state rules and posting uniqueness still constrain repeats, but the previous event-ID recognition guarantee ends.
 
+### WH-01. Rejection, Quarantine, and Key Rotation
+
+| Verified condition | Durable handling and HTTP response |
+|---|---|
+| Invalid/unknown-key signature or malformed security headers | 401 for unauthentic signature/key or expired timestamp; 400 for malformed headers. No business update or payment hold. Keep bounded security metadata and body hash, not untrusted raw payloads |
+| Valid signature, delivery timestamp outside ±300 seconds | 401; quarantine authenticated evidence with rejection reason, never apply it. Request trusted lookup for a reliably correlated operation |
+| Valid signature, missing/invalid event_id or malformed business schema | Quarantine authenticated raw evidence before 400; no business update. Request trusted lookup only if merchant/reference establish ownership |
+| Valid signature, wrong amount/currency/merchant/reference | Durable quarantine before 2xx; no result applied. Open PARAMETER_MISMATCH only with a trusted operation link; otherwise raise an integration anomaly |
+| Valid event, valid correlation | Durable inbox before 2xx; business transition follows M-01 and ST rules |
+| Required inbox/quarantine store unavailable | 503, no acknowledgment of acceptance; provider must retry |
+| Body exceeds 64 KiB | 413 without raw persistence; bounded security metadata only |
+
+Quarantine is separate from the business inbox. Store original authenticated bytes encrypted with restricted access, reason, receive time, key ID, correlation if verified, and body hash. Deduplicate quarantine receipts by provider and body hash for storage only; that hash never substitutes for event_id in business processing. Retain authenticated quarantine for at least 30 days and until linked operations/reviews resolve if longer. A malformed success is preserved for investigation, not promoted to a trusted final result; correction needs a valid event or lookup/reconciliation evidence. Unauthenticated bodies are deliberately not treated as financial evidence.
+
+Key rotation: pre-provision a new secret/key ID, activate it with the provider, accept the previous key for at most 24 hours, then remove it. Emergency compromise revokes immediately, without overlap; recover rejected notifications through trusted lookup. Check key status on every request, use an audited rotation owner in Security Operations, and never log secrets or full sensitive bodies. A valid signature does not override delivery-age or schema checks.
+
 ## Appendix D. Balance Credit and Outbox
 
-### CR-01. Credit Gate
+### CR-01. Credit Gate and Evidence
 
-On verified success:
-
-1. Set `payment_status=SUCCEEDED` and save evidence.
-2. If a blocking reason is open, set `credit_status=REVIEW_REQUIRED`; automatic credit is not authorized.
-3. If no hold exists, set `credit_status=PENDING` and create one logical `CreditRequested(payment_id)` task in the same transaction.
-
-Removing the last blocking reason for a successful payment atomically moves `REVIEW_REQUIRED` to `PENDING` and ensures one logical task exists. Reopening a hold prevents dispatch of an unstarted task; checking only at outbox creation is insufficient.
+On verified payment success, one local payment-DB transaction saves SUCCEEDED and evidence, then sets REVIEW_REQUIRED if a blocking review exists or PENDING and one logical CreditRequested(payment_id) task otherwise. No balance-DB write is part of that transaction. Repeated success never resets an existing credit lifecycle. Review reasons are authoritative under M-01; REVIEW_REQUIRED is a derived credit state, never an independently editable hold.
 
 ```mermaid
 stateDiagram-v2
     [*] --> NOT_REQUESTED
-    NOT_REQUESTED --> PENDING: Success and no hold
-    NOT_REQUESTED --> REVIEW_REQUIRED: Success with hold
-    PENDING --> POSTED: Verified balance posting
-    PENDING --> REVIEW_REQUIRED: Hold or delivery failure
-    REVIEW_REQUIRED --> PENDING: Hold resolved and delivery enabled
-    REVIEW_REQUIRED --> POSTED: In-flight posting confirmed
+    NOT_REQUESTED --> PENDING: Success without blocking review
+    NOT_REQUESTED --> REVIEW_REQUIRED: Success with blocking review
+    PENDING --> REVIEW_REQUIRED: Hold before authorization
+    REVIEW_REQUIRED --> PENDING: Last blocker resolved
+    PENDING --> DISPATCHING: Dispatch authorized atomically
+    OUTCOME_UNKNOWN --> DISPATCHING: Safe redelivery without hold
+    DISPATCHING --> POSTED: Verified posting
+    DISPATCHING --> OUTCOME_UNKNOWN: Lost response or worker
+    DISPATCHING --> PENDING: All attempts proven no effect and no hold
+    DISPATCHING --> REVIEW_REQUIRED: All attempts proven no effect with hold
+    OUTCOME_UNKNOWN --> POSTED: Posting verified by lookup
+    OUTCOME_UNKNOWN --> PENDING: All attempts proven no effect and no hold
+    OUTCOME_UNKNOWN --> REVIEW_REQUIRED: All attempts proven no effect with hold
     POSTED --> [*]
 ```
 
-The worker atomically reserves dispatch while rechecking blocking reasons. That transaction is the boundary after which the call counts as started. If review opens later, an external call already in progress may create a posting. `POSTED` records a verified fact and does not roll back when review opens. Strict blocking through the posting commit requires a separate authorization protocol involving the balance service; it is outside scope.
+### CR-02. Local Atomicity and Dispatch Boundary
 
-| Event | Behavior |
-|---|---|
-| Balance-service timeout or 5xx | Retry with the same `payment_id` |
-| Posting created, response lost | Retry returns existing posting; state becomes `POSTED` |
-| Worker crashes after processing | Lease expires; another worker safely redelivers |
-| Permanent data error | `REVIEW_REQUIRED`; stop delivery; open `CREDIT_DELIVERY_FAILED` |
-| Unavailable for 24 hours | Retain task in manual recovery queue; do not delete |
-| Same posting ID, different amount | Integrity error and manual review; do not alter existing posting |
+Before any credit call, the worker locks the payment row, reloads all blockers, and commits DISPATCH_AUTHORIZED plus credit_status=DISPATCHING and a durable delivery attempt. Hold writers use that same row lock. Reading or claiming an outbox row does not authorize a call. Hold first: no call. Authorization first: that attempt may still execute even if a hold commits before the physical network send. A local lease cannot revoke an external call.
 
-The balance service atomically creates the posting and enforces `payment_id` uniqueness; repeats also check amount, currency, and beneficiary. The outbox enables redelivery; it does not ensure a unique financial effect by itself.
+After authorization, timeout, ambiguous 5xx, lost connection, or a worker lost without a verified result sets credit_status=OUTCOME_UNKNOWN. An unresolved earlier delivery remains possible even if a later attempt proves nonacceptance. A hold stops new authorizations but does not change DISPATCHING or OUTCOME_UNKNOWN to REVIEW_REQUIRED. A verified posting always becomes POSTED, including during a hold. New calls never use a new payment_id to recover credit.
 
-### CR-02. Local Atomicity and the Dispatch Boundary
+The balance service atomically creates at most one posting per payment_id and compares beneficiary, currency, and amount on repeats, including concurrent calls. Outbox provides durable redelivery; the balance DB provides uniqueness. A repeated task returns the existing posting or creates it once. A permanent rejection can establish no effect for that attempt only when the balance contract explicitly guarantees it; older unresolved attempts still require reconciliation. Parameter conflict opens CREDIT_DELIVERY_FAILED and keeps unknown if any attempt may have posted.
 
-Only the payment update and outbox insert share one local payment-database transaction. The balance posting is a later transaction in the balance database; no cross-database atomic commit, distributed transaction, or Saga is claimed here. The financial effect relies on durable redelivery and atomic balance-side deduplication by `payment_id`.
+Strict revocation after authorization requires a balance-owned authorization/fencing protocol and is outside scope. No cross-database atomic commit or distributed transaction is claimed.
 
-Reading or claiming an outbox row is not authorization to call the balance service. Before sending, the worker starts a local transaction, locks the payment row, rereads all blocking reasons, and atomically records a delivery attempt as `DISPATCH_AUTHORIZED`. Every operation that opens/closes a credit hold must lock that same payment row. Thus the two commits have a defined order:
 
-| Order of commits | Required behavior |
-|---|---|
-| Hold commits before dispatch authorization | No balance call; keep credit on review, even if the worker previously read the task |
-| Dispatch authorization commits before hold | This attempt may execute; hold prevents later attempts but cannot revoke that authorization |
+Balance writes and read-only lookups use a 10-second per-call timeout. A held PENDING task with no possible earlier effect becomes REVIEW_REQUIRED; if any earlier attempt remains unresolved, preserve OUTCOME_UNKNOWN. Before repeating an unresolved credit, recheck success, derived blockers, and posting evidence atomically under the same row lock.
 
-The authorization commit, not an ordinary queue read or physical network send, is the logical start boundary in this case. If the worker crashes after authorization with no known result, preserve the ambiguous delivery attempt. A later confirmed posting is recorded even during a hold; retrying dispatch while a hold exists is prohibited. A balance-side status lookup may establish whether the posting exists; without that capability, manual resolution is required while held.
+POSTED is monotonic: a late timeout, rejection, or earlier lookup result never downgrades a verified posting. Every delivery/lookup/hold handler checks the operation version, reloads on conflict, and reevaluates the same evidence. Concurrent evidence is retained even when it cannot change the state.
 
-A disconnect before a first credit response cannot prove whether a posting committed. Without a hold, redeliver the exact same task and `payment_id`: if a posting exists, the balance service returns it; otherwise it creates it once. Do not mark the payment failed or the task delivered on a timeout.
+### CR-03. Read-Only Credit Reconciliation
 
-This contract does not promise that a hold committed after authorization prevents the physical call or financial commit. Strict revocation would require an authorization/fencing protocol owned by the balance service. That stronger guarantee remains outside scope and cannot be achieved by adding one more local read.
+Required balance capability: authenticated, read-only lookup by payment_id, returning POSTED with posting_id, beneficiary, currency, and amount, or a documented result describing absence/uncertainty. Verify all returned attributes. The Balance Recovery worker owns due tasks, uses a 30-second lease, and is rediscovered by the 5-second watchdog. A lost authorized worker becomes OUTCOME_UNKNOWN when its lease/request deadline expires.
 
-Backoff: first delay 2 seconds; then `min(300, 2 * 2^(n-1))` seconds for retry n. Jitter chooses 50–100% of the calculated delay. The case-wide limit for outgoing balance calls is 10 per second and at most 10 concurrent; workers share these limits rather than multiplying them.
+Persist credit_recovery_started_at at the first ambiguous delivery and never reset it on retry, hold, or restart. Run lookup at that anchor +5 seconds, then every 30 seconds until 2 minutes; then every 5 minutes. One current lookup replaces missed deadlines, without a burst. These intervals do not reset the warning age measured from payment success. Manual Balance Operations owns any unposted successful payment at payment_success_at+24 hours, with a next action within 30 minutes; daily reconciliation continues. A hold never stops read-only lookup or recording a verified posting. Shared rate limits and backoff below apply to lookup as well as delivery.
 
-The circuit breaker opens after five consecutive timeout/5xx responses, stops calls for 30 seconds, then allows one probe. Success closes it; another timeout/5xx reopens it. Breaker pauses and restarts do not reset task age. A shared outage creates one operational incident with an updated count of affected operations.
+POSTED resolves uncertainty. An ordinary NOT_FOUND, timeout, or unavailable lookup leaves OUTCOME_UNKNOWN, even during hold: the authorized request could execute later. Only authoritative evidence that every authorized attempt had no effect and cannot execute later permits REVIEW_REQUIRED while held, or PENDING without hold. Such negative evidence is an additional balance capability, not inferred from a missing row. Without it, retain unknown and an owner; no hold label may assert that money was never posted.
 
-Target SLO: 99.9% of successful payments without blocking reviews when success is committed receive a posting within 60 seconds, measured per calendar month. The denominator includes those payments regardless of worker or balance-service failures. Later holds do not retrospectively remove them. Report counts and age separately for excluded payments, without hiding delays.
+Without a hold, safe redelivery with the same payment_id may resolve uncertainty under balance-side concurrent deduplication. While held, do not send even an idempotent write, because it could create the missing posting. Record the hold and unknown credit separately in the interface: “Payment confirmed. Balance credit outcome unknown; further delivery paused for review.” DISPATCHING means an authorized attempt may still execute. POSTED means verified credit even if review remains open.
 
-This is a chosen case target, not yet supported by load or operational data. No customer SLA is stated. Raise a warning 2 minutes after success without a posting. The interface distinguishes “Payment confirmed. Balance credit is processing” from “Payment confirmed. Balance credit is under review.” Credit failure does not move the payment to `FAILED`.
+### CR-04. Delivery Progress, Limits, and Targets
+
+Safety: never more than one balance posting per payment_id. Liveness: a verified successful payment eventually receives exactly one posting if blocking reviews are eventually resolved, valid task data can be delivered, durable tasks are retained, workers continue fair processing, and balance storage/service eventually become available and accept the operation. These are explicit conditions, not an unconditional completion promise. Alert and owned escalation handle violations instead of fabricating success or failure.
+
+Retain tasks until a verified posting, never delete because they reach 24 hours. Backoff before retry n: min(300, 2 * 2^(n-1)) seconds, with jitter at 50–100%; honor circuit-breaker pauses. Shared limits across delivery and lookup: 10 balance calls per second and at most 10 concurrent. The breaker opens after five consecutive timeout/5xx results, pauses 30 seconds, then admits one probe. A successful response closes it; another timeout/5xx reopens it. Neither pauses nor restarts reset age. Coalesce a common outage into one incident with the affected count.
+
+Case target SLO: 99.9% of payments with no blocking review when success commits receive a verified posting within 60 seconds, per calendar month. Worker/balance failures and later holds remain in that denominator. Report excluded holds and their age separately. Warning: 2 minutes after success without POSTED. This target is unmeasured and is not a customer SLA. Credit delivery problems do not change payment_status to FAILED.
 
 ## Appendix E. Attempts, Inbox, and Concurrency
 
@@ -428,6 +488,23 @@ Credit sends have a separate delivery history with `outbox_id`, `delivery_attemp
 
 Local leases and versions cannot revoke a network call that has started. Possible overlap of an old call and an authorized retry is protected by PA-01, the same provider key, and the shared number of reserved attempts. Without provider-side concurrent idempotency, disable automatic create retries after unknown outcomes.
 
+### WR-01. Durable Dispatch and Recovery Ownership
+
+The Payment Orchestrator owns initial dispatch and provider recovery. Accepting a new payment atomically creates the CREATED record, client-key binding, duplicate-guard membership, and a durable initial-dispatch job. Notifications wake workers but are not the source of truth. A watchdog scans due jobs and nonfinal operations every 5 seconds; claims use a 30-second lease and a version/owner token. The Payments platform on-call owns watchdog/queue-health alerts. Thresholds assume workers and storage are available; an outage cannot guarantee a wall-clock resolution bound.
+
+| Durable condition | Actor and action |
+|---|---|
+| CREATED, no reserved CREATE, age less than 60 seconds | Dispatch worker locks the payment and guard, checks eligibility, and atomically reserves the initial attempt and ST-02 before any network call |
+| CREATED, no reserved CREATE, age at least 60 seconds | Watchdog atomically expires the unstarted job and applies ST-03 with LOCAL_DISPATCH_EXPIRED; releases guard, retains key. This is proof of local non-dispatch, not inference about a sent request |
+| Worker resumes after local expiry | Its stale token cannot reserve ST-02; no call is allowed. Claims alone never authorize a send |
+| PROCESSING with expired lease / request deadline and unfinished attempt | Watchdog marks attempt UNRESOLVED, applies ST-05, fixes recovery_started_at if absent, and schedules lookup; it does not allocate an extra CREATE merely for lease expiry |
+| Verified provider PENDING already observed | Observation worker performs due lookup; provider_operation_seen remains true and prohibits CREATE forever for this payment |
+| No final outcome at recovery_started_at + 1 hour | Deadline worker opens RESULT_OVERDUE and upserts the reconciliation case independently of any lookup completion. Payment Operations owns follow-up |
+
+CREATED implies no CREATE reservation or dispatch authorization. If legacy/corrupt data violate that invariant, quarantine for review and treat possible dispatch as unknown; do not use local expiry to release the guard. Expiry, ST-02, and guard release take the same locks, so only one wins. No worker may bypass durable reservation.
+
+Watchdog restart recovers work by due timestamps, never by client retries. One current lookup replaces missed checks; lease replacement does not reset ages, attempt counts, or provider_operation_seen. Queue/scan failures alert the platform on-call after 60 seconds without a successful scan. Unresolved payments retain the duplicate guard until final evidence, except the proven never-dispatched CREATED expiry above.
+
 ## Appendix F. Reconciliation Registry and Unknown-Outcome Closure
 
 Reconciliation compares unresolved local operations with trusted provider evidence. Its registry is separate from `payment_status`: an administrative queue state must not fabricate a financial result.
@@ -457,7 +534,7 @@ These are expected behaviors, not a report of executed implementation tests.
 
 | ID | Given / When | Then | References |
 |---|---|---|---|
-| AC-01 | Two concurrent requests with one key and data | One `payment_id`, one initial CREATE | IC-01–IC-06, IM-06 |
+| AC-01 | Two concurrent requests with one key and data | One `payment_id`; at most one initial CREATE; eventual dispatch or local expiry under WR-01 | IC-01–IC-06, IM-06 |
 | AC-02 | Same key; amount changes from 5000 to 6000 | `409`; original operation unchanged | IC-03, IM-05 |
 | AC-03 | CREATE timeout, lookup `NOT_FOUND`, single retry also times out | Unknown; exactly two reserved CREATE attempts; no more CREATE | ST-04, IC-08, IM-11 |
 | AC-04 | First CREATE unknown; retry receives proven nonacceptance with `429` | Remain unknown; no third CREATE | Appendix B, IC-08 |
@@ -492,11 +569,29 @@ These are expected behaviors, not a report of executed implementation tests.
 | AC-33 | Worker read task; hold commits before dispatch authorization | Shared row lock orders commits; no balance call | CR-02 |
 | AC-34 | Dispatch authorized; hold commits before physical send | Authorized attempt may execute; no strict revocation claimed | CR-02 |
 | AC-35 | Initial balance response is lost; no hold exists | Retry same payment_id; at most one posting | CR-02, IC-11 |
-| AC-36 | Signed webhook has no event_id | 400, no application; trusted lookup for recovery | Appendix C |
+| AC-36 | Signed webhook has no event_id | 400 after authenticated quarantine; no application; trusted lookup | Appendix C |
 | AC-37 | Captured valid delivery replayed within 300 seconds | Same inbox identity; no repeated effect | Appendix C |
 | AC-38 | Daily report has no matching row or is incomplete | Keep unknown, guard, owner, and next action | RC-05 |
 | AC-39 | Final NOT_EXECUTED covers every attempt and seals reference | FAILED with evidence; atomically release guard and resolve case | PA-08, ST-18, RC-06 |
 | AC-40 | Daily reconciliation run repeats or unresolved case reaches 7 days | No duplicate resolution effects; age escalates, never fabricates failure | RC-03, RC-08 |
+| AC-41 | SUCCEEDED with nonblocking review OPEN | PENDING is allowed; blocking reasons empty | M-01, Appendix A |
+| AC-42 | FAILED with credit POSTED proposed | Reject invariant violation; no normal handler creates it | M-01 |
+| AC-43 | Credit dispatch authorized; response lost; SECURITY_HOLD opens | Credit remains OUTCOME_UNKNOWN; no write retry; lookup continues | CR-02, CR-03 |
+| AC-44 | Credit lookup during hold returns matching POSTED, then a late delivery timeout | Record POSTED; keep review; no second write or downgrade | CR-03 |
+| AC-45 | Credit lookup returns NOT_FOUND while old attempt may execute | Remain OUTCOME_UNKNOWN, not REVIEW_REQUIRED | CR-03 |
+| AC-46 | CREATED worker crashes before attempt reservation; 60 seconds pass | Watchdog locally expires never-dispatched job, releases guard, retains key | WR-01, ST-03 |
+| AC-47 | Old dispatch worker resumes after CREATED expiry | Stale token cannot reserve or send | WR-01 |
+| AC-48 | PROCESSING worker lost with reserved CREATE | Watchdog resumes observation; slot retained, no blind new CREATE | WR-01, IC-13 |
+| AC-49 | Lookup call at T0+3600 seconds hangs | Independent deadline opens overdue and stops CREATE at T0+3600 | RP-01 |
+| AC-50 | Verified PENDING followed by NOT_FOUND or timeout | provider_operation_seen=true; CREATE remains prohibited | IC-14, ST-08 |
+| AC-51 | Valid signature but missing event ID | Persist authenticated raw evidence to quarantine before 400; trusted lookup | WH-01 |
+| AC-52 | Valid signature but wrong amount or currency | Quarantine, no financial update; 2xx after save; trusted mismatch review | WH-01 |
+| AC-53 | Old delivery signed by active key | 401 after authenticated quarantine; lookup, no state update | WH-01 |
+| AC-54 | Previous secret exceeds 24-hour overlap or was revoked | 401; security metadata only; trusted recovery | WH-01 |
+| AC-55 | Unknown payment or credit remains unresolved after 30 days | Keep key and fingerprint; no unresolved TTL | KEY-01 |
+| AC-56 | Client receives 202 after retrying lost-response POST | Replace Try again with Check status; use GET only | API-01 |
+| AC-57 | Success; holds eventually resolve; balance and workers recover | Eventually exactly one verified posting under stated liveness conditions | CR-04 |
+| AC-58 | Quarantine unavailable for a signed malformed event | 503 instead of 400/2xx; no false durable-acceptance claim | WH-01 |
 
 ## Beyond the Scope
 
@@ -518,12 +613,12 @@ These topics are marked for continuation without a promised date.
 
 ## Changes and Verification Status
 
-Version 0.3 adds API-01 with one status DTO and bounded client polling; a guard lasting until definitive payment resolution; local hold/dispatch ordering under CR-02; required signed event identity; a coupled primary diagram; and Appendix F with owned reconciliation and conditional negative closure. AC-23 now blocks the former six-minute bypass. The package has four core artifacts, six appendices, and 40 acceptance scenarios.
+Version 0.4 replaces independent-status wording with M-01 combinations; adds DISPATCHING and unknown credit, read-only balance reconciliation, WR-01 durable recovery/CREATED expiry, absolute recovery deadlines, monotonic provider-operation evidence, authenticated webhook quarantine, explicit key lifetime, intentional HTTP mapping, and conditional liveness. AC-01–AC-40 remain with clarified expectations; AC-41–AC-58 cover this review. Core artifacts and six appendices remain. The instrument requires no user action.
 
-Both language specifications and publication carousels are updated together. Automated document consistency checks and visual PDF review are delivery checks, not implementation tests. No provider capability, load result, or measured SLO is claimed. PA-08 must be verified; without it, a report absence cannot close unknown as FAILED.
+Document consistency, export layout, and implementation validation are separate. The 58 scenarios state expected behavior; they are not executed implementation tests. Provider/balance capabilities, concurrency, and the target SLO require real integration validation. PA-08 and authoritative balance negative evidence are additional capabilities, not implied by NOT_FOUND.
 
 ---
 
-Inside the Spec · Real Scenarios. Working Artifacts. Decisions That Matter.  
+Inside the Spec · Realistic Scenarios. Working Artifacts. Decisions That Matter.  
 https://github.com/YuliaMelekhova/inside-the-spec  
 https://www.linkedin.com/in/yuliamelekhova

@@ -1,16 +1,16 @@
 # Table notes: acceptance-scenarios.en.csv
 
 Series: Inside the Spec  
-Subtitle: Real Scenarios. Working Artifacts. Decisions That Matter.  
+Subtitle: Realistic Scenarios. Working Artifacts. Decisions That Matter.  
 Case: 01  
 Author: Yulia Melekhova  
-Version: 0.3  
+Version: 0.4  
 Language: en  
 Status: Draft
 
 ## Purpose
 
-Exact table export from specification v0.3. The specification defines its conditions and exceptions.
+Exact table export from specification v0.4. The specification defines its conditions and exceptions.
 
 [CSV](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/acceptance-scenarios.en.csv) · [Specification](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/specification.en.md) · [Metadata](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/README.md)
 
@@ -18,6 +18,6 @@ UTF-8; comma delimiter; CSV quoting.
 
 ---
 
-Inside the Spec · Real Scenarios. Working Artifacts. Decisions That Matter.  
+Inside the Spec · Realistic Scenarios. Working Artifacts. Decisions That Matter.  
 https://github.com/YuliaMelekhova/inside-the-spec  
 https://www.linkedin.com/in/yuliamelekhova

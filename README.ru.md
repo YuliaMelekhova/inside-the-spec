@@ -1,6 +1,6 @@
 # Inside the Spec
 
-Real Scenarios. Working Artifacts. Decisions That Matter.
+Realistic Scenarios. Working Artifacts. Decisions That Matter.
 
 [English](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/README.md) · [Русский](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/README.ru.md)
 
@@ -10,7 +10,7 @@ Real Scenarios. Working Artifacts. Decisions That Matter.
 
 | Case | Тема | EN | RU | Статус |
 |---|---|---|---|---|
-| 01 | Payment Timeout | [English](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/README.md) | [Русский](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/README.ru.md) | Draft · v0.3 |
+| 01 | Payment Timeout | [English](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/README.md) | [Русский](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/README.ru.md) | Draft · v0.4 |
 
 В каждом кейсе явно заданы предпосылки и границы. Сценарии описывают ожидаемые результаты и не подтверждают тестирование реализации.
 

@@ -1,6 +1,6 @@
 # Редактируемые артефакты · Case 01
 
-Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.
+Inside the Spec – Realistic Scenarios. Working Artifacts. Decisions That Matter.
 
 [К странице кейса](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/README.ru.md)
 
@@ -14,23 +14,24 @@ Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.
 | [payment-review-credit.ru.mmd](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/payment-review-credit.ru.mmd) | Связь платежа, разбора и зачисления |
 | [review-lifecycle.ru.mmd](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/review-lifecycle.ru.mmd) | Жизненный цикл разбора |
 | [credit-state-machine.ru.mmd](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/credit-state-machine.ru.mmd) | Состояния зачисления |
+| [status-combinations.ru.csv](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/status-combinations.ru.csv) | M-01: допустимые сочетания |
 | [state-transitions.ru.csv](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/state-transitions.ru.csv) | ST-01–ST-18 |
 | [idempotency-matrix.ru.csv](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/idempotency-matrix.ru.csv) | IM-01–IM-25 |
-| [acceptance-scenarios.ru.csv](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/acceptance-scenarios.ru.csv) | AC-01–AC-40 |
+| [acceptance-scenarios.ru.csv](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-01-public-package/episodes/01-payment-timeout/artifacts/acceptance-scenarios.ru.csv) | AC-01–AC-58 |
 
 ## Метаданные и использование
 
-Version: 0.3  
+Version: 0.4  
 Language: ru  
 Status: Draft  
 Author: Yulia Melekhova
 
 CSV содержит только таблицы, в UTF-8, с запятой как разделителем. Текст сохраняет Markdown-оформление идентификаторов. Каждый CSV имеет английскую и русскую версии с одинаковыми ID и порядком строк. Mermaid использует комментарии `%%` для метаданных.
 
-Проверено соответствие извлечённых строк и диаграмм исходной спецификации. Это проверка документов, а не выполнение 40 сценариев на реализации. При изменении правил синхронно обновляйте обе спецификации и производные файлы.
+Проверено соответствие извлечённых строк и диаграмм исходной спецификации. Это проверка документов, а не выполнение 58 сценариев на реализации. При изменении правил синхронно обновляйте обе спецификации и производные файлы.
 
 ---
 
-Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.  
+Inside the Spec – Realistic Scenarios. Working Artifacts. Decisions That Matter.  
 https://github.com/YuliaMelekhova/inside-the-spec  
 https://www.linkedin.com/in/yuliamelekhova

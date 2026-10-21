@@ -1,5 +1,5 @@
 ID,Given / When,Then,References
-AC-01,Two concurrent requests with one key and data,"One `payment_id`, one initial CREATE","IC-01–IC-06, IM-06"
+AC-01,Two concurrent requests with one key and data,One `payment_id`; at most one initial CREATE; eventual dispatch or local expiry under WR-01,"IC-01–IC-06, IM-06"
 AC-02,Same key; amount changes from 5000 to 6000,`409`; original operation unchanged,"IC-03, IM-05"
 AC-03,"CREATE timeout, lookup `NOT_FOUND`, single retry also times out",Unknown; exactly two reserved CREATE attempts; no more CREATE,"ST-04, IC-08, IM-11"
 AC-04,First CREATE unknown; retry receives proven nonacceptance with `429`,Remain unknown; no third CREATE,"Appendix B, IC-08"
@@ -34,8 +34,26 @@ AC-32,Matching payment is unknown for 24 hours,Guard remains active; no second C
 AC-33,Worker read task; hold commits before dispatch authorization,Shared row lock orders commits; no balance call,CR-02
 AC-34,Dispatch authorized; hold commits before physical send,Authorized attempt may execute; no strict revocation claimed,CR-02
 AC-35,Initial balance response is lost; no hold exists,Retry same payment_id; at most one posting,"CR-02, IC-11"
-AC-36,Signed webhook has no event_id,"400, no application; trusted lookup for recovery",Appendix C
+AC-36,Signed webhook has no event_id,400 after authenticated quarantine; no application; trusted lookup,Appendix C
 AC-37,Captured valid delivery replayed within 300 seconds,Same inbox identity; no repeated effect,Appendix C
 AC-38,Daily report has no matching row or is incomplete,"Keep unknown, guard, owner, and next action",RC-05
 AC-39,Final NOT_EXECUTED covers every attempt and seals reference,FAILED with evidence; atomically release guard and resolve case,"PA-08, ST-18, RC-06"
 AC-40,Daily reconciliation run repeats or unresolved case reaches 7 days,"No duplicate resolution effects; age escalates, never fabricates failure","RC-03, RC-08"
+AC-41,SUCCEEDED with nonblocking review OPEN,PENDING is allowed; blocking reasons empty,"M-01, Appendix A"
+AC-42,FAILED with credit POSTED proposed,Reject invariant violation; no normal handler creates it,M-01
+AC-43,Credit dispatch authorized; response lost; SECURITY_HOLD opens,Credit remains OUTCOME_UNKNOWN; no write retry; lookup continues,"CR-02, CR-03"
+AC-44,"Credit lookup during hold returns matching POSTED, then a late delivery timeout",Record POSTED; keep review; no second write or downgrade,CR-03
+AC-45,Credit lookup returns NOT_FOUND while old attempt may execute,"Remain OUTCOME_UNKNOWN, not REVIEW_REQUIRED",CR-03
+AC-46,CREATED worker crashes before attempt reservation; 60 seconds pass,"Watchdog locally expires never-dispatched job, releases guard, retains key","WR-01, ST-03"
+AC-47,Old dispatch worker resumes after CREATED expiry,Stale token cannot reserve or send,WR-01
+AC-48,PROCESSING worker lost with reserved CREATE,"Watchdog resumes observation; slot retained, no blind new CREATE","WR-01, IC-13"
+AC-49,Lookup call at T0+3600 seconds hangs,Independent deadline opens overdue and stops CREATE at T0+3600,RP-01
+AC-50,Verified PENDING followed by NOT_FOUND or timeout,provider_operation_seen=true; CREATE remains prohibited,"IC-14, ST-08"
+AC-51,Valid signature but missing event ID,Persist authenticated raw evidence to quarantine before 400; trusted lookup,WH-01
+AC-52,Valid signature but wrong amount or currency,"Quarantine, no financial update; 2xx after save; trusted mismatch review",WH-01
+AC-53,Old delivery signed by active key,"401 after authenticated quarantine; lookup, no state update",WH-01
+AC-54,Previous secret exceeds 24-hour overlap or was revoked,401; security metadata only; trusted recovery,WH-01
+AC-55,Unknown payment or credit remains unresolved after 30 days,Keep key and fingerprint; no unresolved TTL,KEY-01
+AC-56,Client receives 202 after retrying lost-response POST,Replace Try again with Check status; use GET only,API-01
+AC-57,Success; holds eventually resolve; balance and workers recover,Eventually exactly one verified posting under stated liveness conditions,CR-04
+AC-58,Quarantine unavailable for a signed malformed event,503 instead of 400/2xx; no false durable-acceptance claim,WH-01

@@ -6,7 +6,7 @@ ST-04,`PROCESSING`,"Timeout, ambiguous response, undocumented 5xx",`OUTCOME_UNKN
 ST-05,`PROCESSING`,An unfinished create attempt is found after a crash,`OUTCOME_UNKNOWN`,Recover using the same reference and key
 ST-06,`PROCESSING` / `OUTCOME_UNKNOWN`,Verified final success,`SUCCEEDED`,Save evidence; apply credit gate CR-01
 ST-07,`PROCESSING` / `OUTCOME_UNKNOWN`,Verified final failure,`FAILED`,Save evidence; no balance credit
-ST-08,`OUTCOME_UNKNOWN`,Verified current `PENDING`,`PROCESSING`,Continue observation; do not create a new payment
+ST-08,`OUTCOME_UNKNOWN`,Verified current `PENDING`,`PROCESSING`,Persist provider_operation_seen=true; observe only; permanently prohibit new CREATE authorizations
 ST-09,`PROCESSING`,No final outcome by the next check deadline,`OUTCOME_UNKNOWN`,Run lookup; open review at one hour
 ST-10,Nonfinal,"Lookup returns `NOT_FOUND`, timeout, or error",Unchanged,A lookup error does not establish the create outcome
 ST-11,Any,Same client key and fingerprint,Unchanged,Return API-01 PaymentStatus; POST 202 nonfinal / 200 final

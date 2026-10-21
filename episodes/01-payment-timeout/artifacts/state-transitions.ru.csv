@@ -6,7 +6,7 @@ ST-04,`PROCESSING`,"Timeout, неоднозначный ответ, недоку
 ST-05,`PROCESSING`,После сбоя найдена незавершённая попытка create,`OUTCOME_UNKNOWN`,Восстановление по прежним reference и key
 ST-06,`PROCESSING` / `OUTCOME_UNKNOWN`,Подтверждён окончательный успех,`SUCCEEDED`,Сохранить доказательство; применить credit gate из CR-01
 ST-07,`PROCESSING` / `OUTCOME_UNKNOWN`,Подтверждён окончательный отказ,`FAILED`,Сохранить доказательство; зачисления нет
-ST-08,`OUTCOME_UNKNOWN`,Подтверждён актуальный `PENDING`,`PROCESSING`,Продолжить наблюдение; новый платёж не создавать
+ST-08,`OUTCOME_UNKNOWN`,Подтверждён актуальный `PENDING`,`PROCESSING`,Сохранить provider_operation_seen=true; продолжить наблюдение; любые новые разрешения CREATE запрещены
 ST-09,`PROCESSING`,Финального результата нет к следующему сроку проверки,`OUTCOME_UNKNOWN`,Выполнить lookup; при достижении часа открыть разбор
 ST-10,Нефинальное,"Lookup: `NOT_FOUND`, timeout или ошибка",Без изменения,Ошибка lookup не определяет результат create
 ST-11,Любое,Тот же клиентский ключ и fingerprint,Без изменения,Вернуть PaymentStatus по API-01; POST 202 нефинальный / 200 финальный

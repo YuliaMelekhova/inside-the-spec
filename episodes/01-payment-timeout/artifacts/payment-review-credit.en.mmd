@@ -1,13 +1,13 @@
-%% Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.
-%% Case: 01; Author: Yulia Melekhova; Version: 0.3; Language: en; Status: Draft
+%% Inside the Spec – Realistic Scenarios. Working Artifacts. Decisions That Matter.
+%% Case: 01; Author: Yulia Melekhova; Version: 0.4; Language: en; Status: Draft
 flowchart TD
-    P["Verified provider success"] --> T["Atomic payment DB transaction"]
-    T --> S["payment_status = SUCCEEDED"]
-    S --> G{"Blocking review open?"}
-    G -->|Yes| H["credit_status = REVIEW_REQUIRED"]
-    G -->|No| O["credit_status = PENDING + outbox"]
-    H -->|Last hold resolved| O
-    O --> A{"Dispatch authorization with shared row lock"}
-    A -->|Hold already committed| H
-    A -->|Authorized| B["Balance DB: unique posting by payment_id"]
-    B --> C["Confirmed posting: credit_status = POSTED"]
+    S["Verified payment success"] --> G{"Blocking review open?"}
+    G -->|Yes| H["REVIEW_REQUIRED: no authorized attempt"]
+    G -->|No| Q["PENDING + durable outbox"]
+    H -->|Last blocker resolved| Q
+    Q --> A["Atomic authorization: DISPATCHING"]
+    A --> B["Balance: unique posting by payment_id"]
+    B -->|Verified posting| P["POSTED"]
+    A -->|Ambiguous result or worker lost| U["credit_status = OUTCOME_UNKNOWN"]
+    U -->|Read-only lookup verifies posting| P
+    U -->|No hold: safe same-ID redelivery| A
