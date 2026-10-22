@@ -1,0 +1,10 @@
+contract_version,mapping_version,source_system,object_type,raw_status,inspection_result,target_dimension,target_value,is_terminal,meaning
+1,0.3,OMS,return_request,OPEN,,return_state,OPEN,false,Return workflow open
+1,0.3,OMS,return_request,COMPLETED,,return_state,CLOSED_REFUND_REGISTERED,true,Item accepted and refund instruction registered
+1,0.3,OMS,return_request,CLOSED_NO_REFUND,,return_state,CLOSED_NO_REFUND,true,Rejected return closed without a refund instruction
+1,0.3,WMS,inspection,IN_PROGRESS,,inspection_state,PENDING,false,Inspection in progress; no result yet
+1,0.3,WMS,inspection,COMPLETED,ACCEPTED,inspection_state,ACCEPTED,true,Inspection finished; item accepted
+1,0.3,WMS,inspection,COMPLETED,REJECTED,inspection_state,REJECTED,true,Inspection finished; item rejected
+1,0.3,PSP,refund,PENDING,,refund_state,PENDING,false,Provider processing refund
+1,0.3,PSP,refund,COMPLETED,,refund_state,COMPLETED,false,Provider confirms refund issued; a later failure is possible; bank credit not independently confirmed
+1,0.3,PSP,refund,FAILED,,refund_state,FAILED,true,Provider reports initial or post-issuance refund failure; no conclusion about recovered funds
