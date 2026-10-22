@@ -5,7 +5,7 @@ Case: 02
 Author: Yulia Melekhova  
 Version: 0.5  
 Language: en  
-Status: Draft
+Status: Published
 
 ## Purpose
 Define complete ordinary transition rules and event-ID handling. These tables apply after identity/content/revision gates; re-baseline is an audited exception.

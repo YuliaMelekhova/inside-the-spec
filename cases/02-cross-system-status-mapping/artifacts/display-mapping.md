@@ -5,7 +5,7 @@ Case: 02
 Author: Yulia Melekhova  
 Version: 0.5  
 Language: en  
-Status: Draft
+Status: Published
 
 ## Purpose
 Map internal projection enums to customer copy. Never expose raw enum names, conflict details, or technical source payloads in the customer UI.

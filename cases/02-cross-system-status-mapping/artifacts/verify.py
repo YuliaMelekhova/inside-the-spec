@@ -124,7 +124,7 @@ Case: 02
 Author: Yulia Melekhova  
 Version: 0.5  
 Language: en  
-Status: Draft
+Status: Published
 
 ## Purpose
 Report executed finite-model and document checks separately from specified integration behavior.
@@ -136,7 +136,7 @@ Report executed finite-model and document checks separately from specified integ
 - Checked success prerequisites, rejection prerequisites, no-refund contradictions, and 9 independent input/expected-result examples.
 - All nine rules exercised (D01 through flag cases); eight distinct projection enums. D02–D09 counts: {dict(sorted(coverage.items()))}.
 - Verified AC-01 through AC-112 are present once and in order. These are not executed acceptance tests.
-- Checked every model result has a display mapping and draft relative links resolve.
+- Checked every model result has a display mapping and relative links resolve.
 - Post lengths including case URL: EN {lengths['en']}; RU {lengths['ru']} characters.
 - Checked authored Markdown, CSV, and Python for prohibited dash characters.
 

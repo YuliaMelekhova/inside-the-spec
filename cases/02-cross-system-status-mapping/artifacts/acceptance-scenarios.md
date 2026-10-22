@@ -5,10 +5,10 @@ Case: 02
 Author: Yulia Melekhova  
 Version: 0.5  
 Language: en  
-Status: Draft
+Status: Published
 
 ## Purpose
-Use these expected behaviors to review or implement the draft. These scenarios have not been executed against an integration.
+Use these expected behaviors to review or implement the specification. These scenarios have not been executed against an integration.
 
 Unless overridden, events are complete, correctly linked, contract version 1, and have unique IDs; there is no existing reconciliation flag. Omitted dimensions are UNKNOWN. Each case starts independently. Re-baseline scenarios include all validation, authorization, and audit steps in specification.md.
 

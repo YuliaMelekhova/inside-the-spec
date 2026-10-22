@@ -5,7 +5,7 @@ Case: 02
 Author: Yulia Melekhova  
 Version: 0.5  
 Language: en  
-Status: Draft
+Status: Published
 
 ## Purpose
 Separate verified examples of real provider behavior from this case's illustrative adapter contract. Sources checked on 2026-10-21; names and enums in the case are not a reproduction of any provider API.

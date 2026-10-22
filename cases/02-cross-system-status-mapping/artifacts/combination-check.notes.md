@@ -5,7 +5,7 @@ Case: 02
 Author: Yulia Melekhova  
 Version: 0.5  
 Language: en  
-Status: Draft
+Status: Published
 
 ## Purpose
 Use decision-combinations.csv to inspect every state tuple under the first-match rules. Run python3 artifacts/verify.py from the package root to regenerate the table, the embedded dictionary, and the model-check report.
