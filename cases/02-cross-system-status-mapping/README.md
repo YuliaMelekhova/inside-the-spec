@@ -10,6 +10,8 @@ GitHub published · specification v0.5. LinkedIn publication pending.
 
 An illustrative return workflow across OMS, WMS, and PSP. Shared technical artifacts are in English; the Russian guide explains their use.
 
+Editorial revision 0.5.1: the EN/RU post and PDF now close with a statement. Technical specification v0.5 is unchanged.
+
 ## Publication materials
 
 - [Post EN](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/cases/02-cross-system-status-mapping/post.en.md) · [Пост RU](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/cases/02-cross-system-status-mapping/post.ru.md)

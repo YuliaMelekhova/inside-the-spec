@@ -10,6 +10,8 @@ One Status, Three Systems, Different Meanings
 
 Учебный возврат товара между OMS, WMS и PSP. Общие технические артефакты на английском; русские пояснения помогают их читать.
 
+Редакционная версия 0.5.1: посты и PDF EN/RU завершаются утверждением. Техническая спецификация v0.5 не менялась.
+
 ## Материалы публикации
 
 - [Post EN](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/cases/02-cross-system-status-mapping/post.en.md) · [Пост RU](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/cases/02-cross-system-status-mapping/post.ru.md)
