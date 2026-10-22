@@ -23,6 +23,6 @@ Case 02 содержит словарь статусов, девять прав�
 Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.
 Case 02 · Cross-System Status Mapping
 
-Полная спецификация: https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/README.ru.md
+Полная спецификация: https://github.com/YuliaMelekhova/inside-the-spec/blob/main/cases/02-cross-system-status-mapping/README.ru.md
 
 #SystemsAnalysis #RequirementsEngineering #SystemIntegration

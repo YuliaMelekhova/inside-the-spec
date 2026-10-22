@@ -5,7 +5,7 @@ Case: 02
 Author: Yulia Melekhova  
 Version: 0.5  
 Language: en  
-Status: Draft
+Status: Published
 
 ## Purpose
 Use this illustrative specification to review status meaning, ownership, and aggregation across a return workflow. Version 0.5 includes explicit lookup and finance-delivery policies; it is not a description of a deployed integration.

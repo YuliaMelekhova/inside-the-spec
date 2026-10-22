@@ -5,7 +5,7 @@ Case: 02
 Author: Yulia Melekhova  
 Version: 0.5  
 Language: ru  
-Status: Draft
+Status: Published
 
 ## Назначение
 Пояснения описывают решения версии 0.5 и помогают читать общие технические файлы на английском. Это не полный перевод спецификации.

@@ -5,7 +5,7 @@ Case: 02
 Author: Yulia Melekhova  
 Version: 0.5  
 Language: en  
-Status: Draft
+Status: Published
 
 ## Purpose
 Specify operational safeguards around the three-source projection without turning it into a universal payments or accounting system. Numeric examples below are synthetic test policies, not claims about payment-network service levels.

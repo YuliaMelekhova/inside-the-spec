@@ -5,7 +5,7 @@ Case: 02
 Author: Yulia Melekhova  
 Version: 0.5  
 Language: en  
-Status: Draft
+Status: Published
 
 ## Purpose
 Define the illustrative snapshot contract and the validation boundary. This is an assumed adapter contract, not documentation of an existing provider.

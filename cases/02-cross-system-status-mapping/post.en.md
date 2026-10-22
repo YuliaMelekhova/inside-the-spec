@@ -23,6 +23,6 @@ Which system owns the evidence required for the status we show the customer?
 Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.
 Case 02 · Cross-System Status Mapping
 
-Full specification: https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/README.md
+Full specification: https://github.com/YuliaMelekhova/inside-the-spec/blob/main/cases/02-cross-system-status-mapping/README.md
 
 #SystemsAnalysis #RequirementsEngineering #SystemIntegration
