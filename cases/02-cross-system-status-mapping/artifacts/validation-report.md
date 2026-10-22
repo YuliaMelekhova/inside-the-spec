@@ -18,7 +18,7 @@ Report executed finite-model and document checks separately from specified integ
 - All nine rules exercised (D01 through flag cases); eight distinct projection enums. D02–D09 counts: {'D02': 23, 'D03': 3, 'D04': 22, 'D05': 3, 'D06': 3, 'D07': 3, 'D08': 3, 'D09': 4}.
 - Verified AC-01 through AC-112 are present once and in order. These are not executed acceptance tests.
 - Checked every model result has a display mapping and relative links resolve.
-- Post lengths including case URL: EN 2552; RU 2530 characters.
+- Post lengths including case URL: EN 2561; RU 2538 characters.
 - Checked authored Markdown, CSV, and Python for prohibited dash characters.
 
 ## Not verified by this script

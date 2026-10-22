@@ -18,7 +18,7 @@ Case 02 contains the source-status dictionary, nine decision rules yielding eigh
 
 The scenarios specify expected behavior, not executed integration tests. The model check evaluates 64 state combinations plus 64 reconciliation-flag cases: 128 inputs. This is a worked specification, not a report of a production incident.
 
-Which system owns the evidence required for the status we show the customer?
+A customer-facing status needs evidence from the system that owns the fact behind it.
 
 Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.
 Case 02 · Cross-System Status Mapping
