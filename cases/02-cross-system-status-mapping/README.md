@@ -6,7 +6,7 @@ Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.
 
 One Status, Three Systems, Different Meanings
 
-Review branch · specification v0.4. LinkedIn publication pending.
+Review branch · specification v0.5. LinkedIn publication pending.
 
 An illustrative return workflow across OMS, WMS, and PSP. Shared technical artifacts are in English; the Russian guide explains their use.
 
@@ -18,13 +18,14 @@ An illustrative return workflow across OMS, WMS, and PSP. Shared technical artif
 
 ## Working artifacts
 
+- [Complete source transitions and event-ID/revision handling](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/transition-and-deduplication.md)
 - [Specification and decision rules](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/specification.md)
 - [Event contract](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/event-contract.md)
 - [Source-status dictionary](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/status-mapping.csv)
 - [Dictionary notes](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/status-mapping.notes.md)
 - [EN/RU interface labels](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/display-mapping.md)
 - [Dispatch, deadlines, and finance handoff](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/operational-contract.md)
-- [100 acceptance scenarios](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/acceptance-scenarios.md)
+- [112 acceptance scenarios](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/acceptance-scenarios.md)
 - [64 state combinations](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/decision-combinations.csv)
 - [Model-check scope](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/combination-check.notes.md)
 - [Reproducible model check](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/verify.py)
@@ -37,4 +38,3 @@ The model check covers 128 inputs: 64 state tuples and 64 reconciliation overrid
 [All cases](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/README.md) · [Yulia Melekhova on LinkedIn](https://www.linkedin.com/in/yuliamelekhova)
 
 [PDF export validation](https://github.com/YuliaMelekhova/inside-the-spec/blob/case-02-cross-system-status-mapping/cases/02-cross-system-status-mapping/artifacts/pdf-validation.md)
-

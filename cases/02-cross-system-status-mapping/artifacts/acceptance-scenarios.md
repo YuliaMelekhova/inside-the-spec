@@ -3,7 +3,7 @@
 Series: Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.  
 Case: 02  
 Author: Yulia Melekhova  
-Version: 0.4  
+Version: 0.5  
 Language: en  
 Status: Draft
 
@@ -34,7 +34,7 @@ Unless overridden, events are complete, correctly linked, contract version 1, an
 | AC-18 | Independent revision spaces | OMS rev 20 OPEN; WMS rev 2 ACCEPTED; PSP rev 1 COMPLETED | REFUND_ISSUED; no cross-source comparison |
 | AC-19 | Concurrent updates | WMS ACCEPTED and PSP COMPLETED arrive concurrently | Both facts retained; final REFUND_ISSUED |
 | AC-20 | Reconciliation latch | Invalid linked event, then ordinary valid newer snapshot | Conflict remains until recorded authoritative reconciliation |
-| AC-21 | Evidence timeout | REFUND_NOT_CONFIRMED persists for 15 minutes | One operations task; no fabricated refund outcome |
+| AC-21 | Evidence timeout | WMS ACCEPTED makes registration/dispatch evidence due; REFUND_NOT_CONFIRMED persists for 15 minutes | One operations task; no fabricated refund outcome |
 | AC-22 | Unsupported contract | Linked source snapshot contract_version=2 | Quarantine; no fact update; NEEDS_RECONCILIATION |
 | AC-23 | Changed event identity content | Same PSP event_id reused for a different payload on the same linked refund | Conflict; retain valid fact; NEEDS_RECONCILIATION |
 | AC-24 | No evidence | All three dimensions UNKNOWN | RETURN_IN_PROGRESS |
@@ -71,14 +71,14 @@ Unless overridden, events are complete, correctly linked, contract version 1, an
 | AC-55 | OMS rejected transition | OMS OPEN rev 1 → CLOSED_NO_REFUND rev 2; WMS REJECTED | RETURN_REJECTED |
 | AC-56 | Same issuance state new revision | PSP COMPLETED rev 4 → COMPLETED rev 5; WMS ACCEPTED | Accept rev 5; REFUND_ISSUED |
 | AC-57 | Initial terminal full snapshot | First WMS snapshot COMPLETED/REJECTED rev 5; OMS OPEN | Accept full snapshot; RETURN_REJECTED |
-| AC-58 | Invalid stale snapshot | Accepted PSP rev 4; linked rev 3 has wrong amount | Gate B precedes revision gate; reconciliation |
+| AC-58 | Invalid stale snapshot | Accepted PSP rev 4; linked rev 3 has wrong amount | Quarantine; deduplicated integration incident; keep projection, flags, and baseline unchanged |
 | AC-59 | Neutral UI | Projection NEEDS_RECONCILIATION | Neutral EN/RU status-check copy; no internal enum or conflict details |
 | AC-60 | Source correction at equal revision | Authoritative payload differs at accepted revision | Re-baseline requires explicit source-owner confirmation and audit |
 | AC-61 | Unresolved case escalation | Operations case unresolved for four hours | Escalate to owning lead; persist next four-hour deadline |
 | AC-62 | No unowned recovery handoff | Payments operator attempts to close FAILED case without accepting recovery owner/reference | Do not close case; retain ownership and deadline |
 | AC-63 | Full-snapshot equality | Same object/revision/payload; different event_id and occurred_at | No fact update and no conflict |
 | AC-64 | Rejected path has no refund ID | Registry has no refund object; PSP event claims R-204 | Gate A; incident without mutating the return |
-| AC-65 | Initial workflow stall | RETURN_IN_PROGRESS unchanged for 24 hours | Returns-operations task; no automatic rejection |
+| AC-65 | Initial workflow stall | RETURNS_TEST_V1 deadline reached 24 hours after first observation; physical workflow unfinished | Returns-operations task; no automatic rejection |
 | AC-66 | Redelivery of invalid event | Exact repeat of a previously quarantined linked event | Stored failure outcome; no second case or flag |
 | AC-67 | OMS terminal regression | OMS CLOSED_NO_REFUND rev 2 → OPEN rev 3 | Gate B terminal regression; retain baseline; reconciliation |
 | AC-68 | Early PSP completed with WMS pending | WMS PENDING; PSP COMPLETED | AWAITING_CONFIRMATION; provider evidence retained internally |
@@ -114,6 +114,19 @@ Unless overridden, events are complete, correctly linked, contract version 1, an
 | AC-98 | Lost finance acknowledgment | Receiver already accepted; sender retries same financial_exception_id | Return existing case; no duplicate financial effects |
 | AC-99 | Late finance timeout | FINANCE_ACCEPTED committed; earlier sender timeout arrives | Do not regress accepted state or schedule another delivery |
 | AC-100 | Finance outage recovery | Destination recovers with parked/pending backlog | Rate-limited recovery; compare receiver acknowledgments; unaccepted records cannot expire |
+
+| AC-101 | Stale lowercase result | WMS ACCEPTED rev 4 accepted; new event ID, version 1 rev 3 has lowercase accepted | Incident and quarantine only; preserve projection and flags |
+| AC-102 | Staleness unprovable | Linked event has malformed revision or unsupported contract despite apparently old timestamp | Latch reconciliation; timestamp cannot prove staleness |
+| AC-103 | Old event ID collision | Seen event_id replayed with different content and lower revision | Integrity conflict; latch reconciliation despite low revision |
+| AC-104 | PSP terminal regression to pending | PSP FAILED rev 4 then PENDING rev 5 | Retain FAILED; latch reconciliation |
+| AC-105 | PSP failure same-state | PSP FAILED rev 4 then valid FAILED rev 5 | Accept baseline rev 5; no new conflict or duplicate entry task |
+| AC-106 | WMS same-state and regression | ACCEPTED rev 4 then ACCEPTED rev 5 then IN_PROGRESS rev 6 | Accept rev 5; retain it and latch on rev 6 |
+| AC-107 | Unaccepted dispatch | OMS worker sees no authoritative acceptance, or a revoked authorization before an unsent create | Block create; owner investigates; no refund submitted |
+| AC-108 | Physical inspection wait | O=OPEN, W=PENDING, P=UNKNOWN for 15 minutes | D09; no integration-evidence timeout; returns-policy deadline applies |
+| AC-109 | Accepted but no instruction | O=OPEN, W=ACCEPTED, P=UNKNOWN | D08 neutral UI; after 15 minutes check OMS registration before PSP |
+| AC-110 | Rejected with failed refund | W=REJECTED; reliably linked PSP FAILED | D02; process case and finance assessment; no asserted loss or mandatory posting |
+| AC-111 | D04 parentheses happy path | O=CLOSED_REFUND_REGISTERED, W=ACCEPTED, P=COMPLETED | D05 REFUND_ISSUED; D04 false |
+| AC-112 | Store refusal outside scope | Store declines request before warehouse inspection | Do not encode as CLOSED_NO_REFUND in this contract; separate outcome/model required |
 
 ---
 Inside the Spec · Real Scenarios. Working Artifacts. Decisions That Matter.

@@ -1,4 +1,4 @@
-"""Case 02 v0.4: finite projection model and document consistency checks.
+"""Case 02 v0.5: finite projection model and document consistency checks.
 This does not execute the integration acceptance scenarios.
 """
 from pathlib import Path
@@ -97,6 +97,7 @@ def main():
         if w == 'REJECTED' and p != 'UNKNOWN':
             assert result == 'NEEDS_RECONCILIATION'
         output.append([o, w, p, rule, result, str(rule == 'D02').lower(), flagged_rule, flagged_result])
+    assert len({r[4] for r in output}) == 8
     assert len(output) == 64 and set(coverage) == {f'D{i:02}' for i in range(2, 10)}
     with (ART / 'decision-combinations.csv').open('w', newline='') as f:
         writer = csv.writer(f)
@@ -106,12 +107,12 @@ def main():
         writer.writerows(output)
     acceptance = (ART / 'acceptance-scenarios.md').read_text()
     ids = re.findall(r'^\| (AC-\d+) \|', acceptance, re.M)
-    assert ids == [f'AC-{i:02}' for i in range(1, 101)]
+    assert ids == [f'AC-{i:02}' for i in range(1, 113)]
     lengths = {}
     for lang in ('en', 'ru'):
         post = (ROOT / f'post.{lang}.md').read_text().strip()
         lengths[lang] = len(post)
-        assert len(post) < 3000 and '100' in post
+        assert len(post) < 3000 and '112' in post
         assert 'REFUND_ISSUED' in post and '#SystemIntegration' in post
     # Ensure every projection result has a bilingual display row.
     display = (ART / 'display-mapping.md').read_text()
@@ -121,7 +122,7 @@ def main():
 Series: Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.  
 Case: 02  
 Author: Yulia Melekhova  
-Version: 0.4  
+Version: 0.5  
 Language: en  
 Status: Draft
 
@@ -132,11 +133,11 @@ Report executed finite-model and document checks separately from specified integ
 - Parsed 9 dictionary rows; keys unique; contract/mapping versions and 5 terminal mappings checked.
 - Generated the embedded dictionary from the CSV; verified projected state sets match the model domains.
 - Enumerated 64 state tuples with no reconciliation flag and 64 D01 overrides: 128 model inputs.
-- Checked success prerequisites, rejection prerequisites, no-refund contradictions, and 9 manually specified outcomes.
-- All D02–D09 branches exercised. Counts: {dict(sorted(coverage.items()))}.
-- Verified AC-01 through AC-100 are present once and in order. These are not executed acceptance tests.
+- Checked success prerequisites, rejection prerequisites, no-refund contradictions, and 9 independent input/expected-result examples.
+- All nine rules exercised (D01 through flag cases); eight distinct projection enums. D02–D09 counts: {dict(sorted(coverage.items()))}.
+- Verified AC-01 through AC-112 are present once and in order. These are not executed acceptance tests.
 - Checked every model result has a display mapping and draft relative links resolve.
-- Post lengths before final case URL: EN {lengths['en']}; RU {lengths['ru']} characters.
+- Post lengths including case URL: EN {lengths['en']}; RU {lengths['ru']} characters.
 - Checked authored Markdown, CSV, and Python for prohibited dash characters.
 
 ## Not verified by this script
@@ -159,7 +160,7 @@ https://www.linkedin.com/in/yuliamelekhova
             for target in re.findall(r'\]\(([^)]+)\)', content):
                 if '://' not in target and not target.startswith('#'):
                     assert (path.parent / target.split('#')[0]).exists(), (path, target)
-    print(f'PASS: 128 model inputs, 9 manual outcomes, 100 scenario IDs; posts {lengths}')
+    print(f'PASS: 128 model inputs, 9 independent examples, 112 scenario IDs; posts {lengths}')
 
 
 if __name__ == '__main__':

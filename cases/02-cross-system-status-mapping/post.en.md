@@ -2,23 +2,23 @@ One Status, Three Systems, Different Meanings
 
 A return can be “completed” while the customer is still waiting for a refund.
 
-Consider an illustrative retailer with three systems. The store completes the accepted-return workflow after registering a refund instruction. The warehouse completes an inspection. The payment provider completes its own refund processing.
+Consider an illustrative retailer. The store completes an accepted-return workflow after registering a refund instruction. The warehouse completes an inspection. The payment provider completes its refund processing.
 
-All three can send COMPLETED. They describe different objects and different conditions for completion. The store also needs a separate outcome for a rejected return closed without a refund.
+All three can send COMPLETED. They describe different objects and conditions. Translating each into “Money refunded” lets a store or warehouse event imply that the customer has their money before the provider has confirmed anything.
 
-If an integration translates every COMPLETED into “Money refunded,” a store or warehouse event can imply that the customer has their money before the provider has confirmed anything.
+The mapping needs the source, the object, and the evidence behind the status. A completed inspection also needs a result: ACCEPTED or REJECTED. Finishing the inspection can mean rejecting the item.
 
-The mapping needs the source, the object, and the evidence behind the status. A completed warehouse inspection also needs inspection_result: ACCEPTED or REJECTED. Finishing the inspection can mean rejecting the item.
+I’d keep the return request, inspection, and refund as separate facts: return_state, inspection_state, and refund_state. inspection_state covers both in-progress and final results. The customer status depends on those facts and an unresolved reconciliation flag retained from earlier conflicts.
 
-I’d keep return_state, inspection_state, and refund_state separate. inspection_state includes both an unfinished inspection and its final result. The customer label is calculated from these facts.
+For an accepted item, provider completion matching the linked refund ID, amount, and currency can establish “Refund issued by provider” (REFUND_ISSUED), provided no conflict remains. The bank may not show the credit yet. A later valid provider failure updates this result.
 
-For an accepted item, a matching provider completion can establish REFUND_ISSUED. The UI says “Refund issued by provider,” with a note that the bank may not show the credit yet. A later provider failure updates this result. Provider completion is necessary; warehouse acceptance is also required in this case. An early provider result is retained while the missing warehouse evidence is checked.
+In this case, warehouse acceptance authorizes dispatch. An early PSP event means warehouse evidence reached the projection late; it does not authorize paying before inspection. With complete snapshots and revisions per source object, delayed PENDING cannot overwrite newer COMPLETED.
 
-Ordering matters too. With complete snapshots and a revision number per source object, a delayed PENDING cannot overwrite a newer COMPLETED. A later provider failure is a valid new outcome. Correcting a terminal warehouse result requires reconciliation that replaces the saved fact and revision.
+Case 02 contains the source-status dictionary, nine decision rules yielding eight statuses, an event contract, UI labels, and 112 acceptance scenarios. Operational notes cover dispatch, financial handoff, and deadlines because these determine what happens when evidence is missing or contradictory.
 
-Case 02 includes one source-status dictionary, a decision table, an event contract, UI labels, and 100 acceptance scenarios. The scenarios specify expected behavior, not executed integration tests. A separate model check covers all 64 state combinations and reconciliation overrides.
+The scenarios specify expected behavior, not executed integration tests. The model check evaluates 64 state combinations plus 64 reconciliation-flag cases: 128 inputs. This is a worked specification, not a report of a production incident.
 
-A useful review question: which system owns the evidence required for the status we show the customer?
+Which system owns the evidence required for the status we show the customer?
 
 Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.
 Case 02 · Cross-System Status Mapping

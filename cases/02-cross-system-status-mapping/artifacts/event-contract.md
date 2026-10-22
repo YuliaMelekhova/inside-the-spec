@@ -3,7 +3,7 @@
 Series: Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.  
 Case: 02  
 Author: Yulia Melekhova  
-Version: 0.4  
+Version: 0.5  
 Language: en  
 Status: Draft
 
@@ -31,7 +31,7 @@ All events are JSON objects with envelope fields and a nested payload object. Ad
 
 Class A: identity cannot be trusted. Quarantine, create an integration-operations incident, and change no return fact or return flag. Authentication failure, unreadable JSON, missing routing fields, unknown object, or inconsistent linkage belongs here. Do not guess a return from an untrusted return_id.
 
-Class B: identity is reliably bound but content is invalid. Quarantine the event, keep the last valid fact and baseline, latch the linked return's reconciliation flag, recompute D01, and create an immediate operations case. Wrong amount or currency belongs here. Unknown contract versions are B when the stable identity envelope is still readable and trusted; otherwise A.
+Class B: identity is reliably bound but content is invalid. For a supported version-1 envelope with a comparable positive integer revision strictly below the baseline and an intact event ID, quarantine and create a deduplicated integration incident without changing the projection or flags. Otherwise keep the fact and baseline, latch reconciliation, recompute D01, and create an immediate operations case. Event-ID content conflicts, missing event IDs, malformed revisions, and unsupported contracts cannot use the stale exception. Wrong amount or currency belongs here. Unknown contract versions are B when the stable identity envelope is still readable and trusted; otherwise A.
 
 The trusted registry is established by OMS before dispatch. For a rejected return it has R-204 and I-204 but no refund ID. The accepted path adds F-204 with expected amount and currency before submission. Updates to this registry are authenticated control operations, not inferred from incoming status events.
 

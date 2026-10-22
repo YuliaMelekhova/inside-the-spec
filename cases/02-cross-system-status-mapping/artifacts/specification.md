@@ -3,19 +3,21 @@
 Series: Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.  
 Case: 02  
 Author: Yulia Melekhova  
-Version: 0.4  
+Version: 0.5  
 Language: en  
 Status: Draft
 
 ## Purpose
-Use this illustrative specification to review status meaning, ownership, and aggregation across a return workflow. Version 0.4 includes explicit lookup and finance-delivery policies; it is not a description of a deployed integration.
+Use this illustrative specification to review status meaning, ownership, and aggregation across a return workflow. Version 0.5 includes explicit lookup and finance-delivery policies; it is not a description of a deployed integration.
 
 ## Scope and actors
 One return contains one item, one inspection, and at most one full refund of USD 80.00. OMS manages the request and owns trusted object linkage and expected refund amount. WMS owns inspection evidence. PSP owns refund-processing evidence. The integration holds a derived read projection, not a new business authority.
 
-OMS has a dispatch worker. After acceptance, OMS atomically registers refund intent, linkage, and a durable dispatch record before closing as COMPLETED. The worker submits the instruction to PSP. It reuses the same refund ID and provider-supported idempotency key on submission retries; after an ambiguous response it queries PSP before retrying. The key's scope is this one refund instruction, not all payments. A provider contract without safe deduplication/query support requires a different dispatch design. The detailed crash-recovery contract is in operational-contract.md. Transactional Outbox guarantees durable intent, not exactly-once execution at PSP.
+OMS has a dispatch worker. Only after authoritative WMS ACCEPTED, OMS atomically registers refund intent, linkage, and a durable dispatch record before closing as COMPLETED. The worker submits the instruction to PSP. It reuses the same refund ID and provider-supported idempotency key on submission retries; after an ambiguous response it queries PSP before retrying. The key's scope is this one refund instruction, not all payments. A provider contract without safe deduplication/query support requires a different dispatch design. The detailed crash-recovery contract is in operational-contract.md. Transactional Outbox guarantees durable intent, not exactly-once execution at PSP.
 
-The rejected path closes in OMS as CLOSED_NO_REFUND, without a refund instruction. UNKNOWN, OPEN, CLOSED_REFUND_REGISTERED, and CLOSED_NO_REFUND are the four projected OMS states. UNKNOWN means no valid snapshot, not an actual OMS state.
+OMS records the accepted inspection ID/revision as dispatch authorization. The worker must verify this authorization before create; an observed correction or unresolved blocking conflict suspends unsubmitted instructions. A correction racing with an already sent request requires reconciliation, not an assumption that the request was canceled. Early PSP delivery in this projection means delayed WMS delivery to the projection, not permission to dispatch before acceptance.
+
+The rejected path closes in OMS as CLOSED_NO_REFUND, without a refund instruction, after WMS REJECTED. Store refusal before warehouse inspection, canceled requests, and provisional inspection decisions are outside this case. They need separate outcomes; CLOSED_NO_REFUND must not encode them. UNKNOWN, OPEN, CLOSED_REFUND_REGISTERED, and CLOSED_NO_REFUND are the four projected OMS states. UNKNOWN means no valid snapshot, not an actual OMS state.
 
 Source adapters emit complete snapshots, immutable event IDs, and monotonically increasing revisions per object. Revisions are never compared across sources. Delivery order can differ from source order. Only contract version 1 is supported. See event-contract.md for all fields and validation outcomes.
 
@@ -41,8 +43,8 @@ The CSV is authoritative. is_terminal applies to ordinary ingestion, not bank-se
 ## Event processing, in order
 1. **Identity gate A.** Authenticate source and validate stable routing/linkage, including return_id and PSP refund_id. A failure is quarantined with an integration incident and no return mutation. A trusted identity must be established before any customer-specific flag is set.
 2. **Redelivery identity.** For a valid nonempty event_id, inspect (source_system, event_id). An exact repeat returns the stored ingestion outcome without creating another flag, case, or audit outcome. Changed content under that identity is a B conflict; retain all existing facts. If both the previously bound return and the newly bound return differ, flag both reliably identified returns for review. Missing/malformed event_id proceeds to gate B and cannot use event-ID deduplication; deduplicate its incident by source object and raw-content hash.
-3. **Content gate B.** Validate the envelope and full payload against event-contract.md, including contract version, revision type, amount, currency, and dictionary values. On failure, retain the fact and baseline, quarantine, latch reconciliation, and open an immediate case. This check precedes revision comparison, so malformed older events are still reported. A redelivery of an already handled invalid event remains a no-op.
-4. **Revision gate.** Compare only within the bound source object. A valid lower revision is stale and cannot update the fact. An equal revision with identical comparable business payload is a no-op; different content is a latched B conflict. A higher revision proceeds to transition validation. Full snapshots permit revision gaps.
+3. **Content gate B and stale classification.** Validate the full snapshot. After gates A and event-ID integrity, a revision is comparable only when the supported version-1 envelope provides a positive integer revision for the same bound source object. If that revision is strictly below the accepted baseline, retain the fact, baseline, projection, and existing flags. Invalid stale content is quarantined with a deduplicated integration incident, but does not latch a return flag; valid stale content is ignored. An unsupported contract, malformed revision, missing event ID, or reused event ID with changed content cannot use this exception. All other B failures retain the fact and baseline, quarantine, latch reconciliation, and open an immediate case. Exact redelivery returns its stored outcome.
+4. **Revision gate.** Compare only within the bound source object. Lower comparable revisions were handled in step 3 and cannot update the fact. An equal revision with identical comparable business payload is a no-op; different content is a latched B conflict. A higher revision proceeds to transition validation. Full snapshots permit revision gaps.
 5. **Transition gate.** A first valid snapshot may establish any dictionary state. Ordinary transitions are OMS OPEN→COMPLETED or OPEN→CLOSED_NO_REFUND; WMS IN_PROGRESS→COMPLETED with one result; PSP PENDING→COMPLETED, PENDING→FAILED, or COMPLETED→FAILED. PSP COMPLETED is not terminal; COMPLETED→PENDING remains an invalid transition, but COMPLETED→FAILED is a normal late outcome, not a manual correction. A higher-revision repeat of an unchanged state/result is valid. Terminal sets are defined in the CSV. A terminal outcome change or regression is a B conflict and retains the baseline until reconciliation, even when its revision is higher.
 6. **Commit.** Atomically persist accepted fact, baseline revision, mapping version, ingestion outcome, audit evidence, recomputed projection, timer changes, and task-outbox records. Serialize by return or use optimistic concurrency with retry. No accepted concurrent update may erase another dimension.
 7. **Reconciliation.** Flags are latched. New ordinary events may update valid dimensions but cannot clear the flag. An operator must use the authoritative re-baseline procedure below. Cross-source contradictions under D02 also latch a flag and create an immediate case; they are not treated as harmless delivery lag.
@@ -50,14 +52,14 @@ The CSV is authoritative. is_terminal applies to ordinary ingestion, not bank-se
 All ingestion outcomes need durable replay protection. Retention duration and replay horizon must be agreed before deployment. Timestamps are diagnostic, not precedence rules.
 
 ## Projection decisions: first matching rule wins
-Let O=return_state, W=inspection_state, P=refund_state. “P known” means P is one of PENDING, COMPLETED, FAILED, equivalently P != UNKNOWN. F means an unresolved latched reconciliation flag.
+Let O=return_state, W=inspection_state, P=refund_state. “P known” means P is one of PENDING, COMPLETED, FAILED, equivalently P != UNKNOWN. F means an unresolved latched reconciliation flag. The projection function is project(O, W, P, F): four inputs, including historical reconciliation state. Nine decision rules yield eight distinct projection enums.
 
 | Rule | Condition | Projection enum |
 |---|---|---|
 | D01 | F=true | NEEDS_RECONCILIATION |
 | D02 | (W=REJECTED and (P known or O=CLOSED_REFUND_REGISTERED)) OR (O=CLOSED_NO_REFUND and (P known or W=ACCEPTED)) | NEEDS_RECONCILIATION |
 | D03 | W=REJECTED | RETURN_REJECTED |
-| D04 | (W in UNKNOWN,PENDING and (P known or O=CLOSED_REFUND_REGISTERED)) OR (O=CLOSED_NO_REFUND and W in UNKNOWN,PENDING) | AWAITING_CONFIRMATION |
+| D04 | W ∈ {UNKNOWN, PENDING} AND (P known OR O ∈ {CLOSED_REFUND_REGISTERED, CLOSED_NO_REFUND}) | AWAITING_CONFIRMATION |
 | D05 | W=ACCEPTED and P=COMPLETED | REFUND_ISSUED |
 | D06 | W=ACCEPTED and P=FAILED | REFUND_FAILED |
 | D07 | W=ACCEPTED and P=PENDING | REFUND_PROCESSING |
@@ -68,7 +70,9 @@ D02 emits a reconciliation flag in the same transaction; record D02 as the trigg
 
 Case decision: warehouse acceptance is a prerequisite for showing REFUND_ISSUED, even when PSP completion arrived first. OMS OPEN is only workflow lag and is not a success gate. This intentionally favors consistent return evidence over immediately displaying an early provider result. It does not deny or overwrite that result, which remains available to operations. A confirmed OMS no-refund closure is substantive evidence and does trigger D02 when contradictory.
 
-REFUND_NOT_CONFIRMED says no valid PSP snapshot has arrived; it does not assert that submission never occurred. Projection enums are internal API values. Use display-mapping.md for all UI copy; never render enum names directly.
+REFUND_NOT_CONFIRMED says WMS accepted but no valid PSP snapshot has arrived; it asserts neither registered intent nor submission. With O=OPEN/UNKNOWN, operations checks OMS intent registration first; with O=CLOSED_REFUND_REGISTERED, it checks dispatch and PSP. Both use neutral status-check copy. Projection enums are internal API values. Use display-mapping.md for all UI copy; never render enum names directly.
+
+The complete source transition and event-ID tables are in transition-and-deduplication.md. D02 with W=REJECTED and P=FAILED is intentional: a refund object should not exist for an originally rejected path. FAILED does not prove zero prior financial effects. The case records a process contradiction and requests finance assessment, which may conclude no posting is needed; it does not assert a loss.
 
 ## Authoritative re-baseline
 1. The reconciliation owner fetches the current snapshot directly from the authenticated source object API, not from the disputed event queue. Fetch other implicated sources and trusted linkage for cross-source conflicts. Correct the source/registry through its own authorized workflow first if necessary.
@@ -97,23 +101,25 @@ Thresholds are explicit illustrative assumptions, not provider SLAs. Timers use 
 
 | Condition | Start / threshold | Owner and action | Exit |
 |---|---|---|---|
-| AWAITING_CONFIRMATION or REFUND_NOT_CONFIRMED | One shared evidence-wait interval; task after 15 minutes | Integration operations checks WMS/OMS; payments operations checks dispatch and PSP; integration operations owns coordination | Valid evidence leaves this group, or handoff to reconciliation |
+| AWAITING_CONFIRMATION or REFUND_NOT_CONFIRMED | Shared evidence-wait interval after a downstream prerequisite proves missing evidence is expected, or WMS acceptance makes OMS registration due; task after 15 minutes | Integration operations checks WMS/OMS; payments operations checks dispatch and PSP; integration operations owns coordination | Valid evidence leaves this group, or handoff to reconciliation |
 | REFUND_PROCESSING | Persisted method/provider policy deadline; no universal 15-minute default | Payments operations queries PSP, checks its processing status, and contacts provider support | Valid issuance/failure snapshot; monitoring then follows that stage |
 | REFUND_FAILED | Immediate task on entry | Payments operations investigates and gives customer support a tracked recovery case | Source correction via re-baseline, or documented transfer to the separately owned recovery process; the truthful FAILED fact remains until evidence changes |
 | D01 or D02 | Immediate case | Integration operations owns reconciliation; source owner supplies authoritative evidence; payments operations joins money-related conflicts | Valid re-baseline and resolution, or explicit external recovery handoff with reconciliation flag retained |
-| RETURN_IN_PROGRESS | Task after 24 hours from first entry without resolution | Returns operations checks request and inspection progress | Valid evidence changes projection or a recovery handoff |
+| RETURN_IN_PROGRESS / unfinished physical inspection | Versioned returns-policy deadline; illustrative 24 hours from first return observation | Returns operations checks receipt and inspection progress | Valid evidence changes projection or a recovery handoff |
 | RETURN_REJECTED | No new timer | Normal rejected-return outcome | New contradictory evidence opens reconciliation |
 | REFUND_ISSUED | Method/provider visibility-check deadline; event monitoring continues | Payments operations monitors later outcomes and investigates missing bank visibility when due | Newer PSP FAILED updates the projection; financial-exception handling continues |
+
+D04 is classified as missing integration evidence because a valid PSP object or either OMS closure implies a completed inspection under this process contract. It is not the normal wait for physical receipt. With W=UNKNOWN/PENDING, P=UNKNOWN, and O=UNKNOWN/OPEN, D09 applies and the returns-policy deadline governs the physical workflow. A source snapshot that reveals dispatch without prior acceptance creates a process incident; projection arrival order alone does not prove that violation. The independent physical-workflow monitor persists its first-observation anchor, policy version, owner, and deadline; repeats and masked display states cannot reset it.
 
 Switching between AWAITING_CONFIRMATION and REFUND_NOT_CONFIRMED does not reset the shared timer. Remaining in any timed state also does not reset its timer. Leaving a timer group closes its interval; later re-entry starts a new interval, while any already open operations case is retained and updated. REFUND_PROCESSING uses its own policy deadline anchored to the first valid PSP PENDING observation, even if D04 or D01 currently masks it. REFUND_ISSUED monitoring is anchored to first valid PSP COMPLETED evidence on the same basis. Repeated snapshots and UI projection changes never reset these deadlines. See operational-contract.md for the precedence of these source-fact monitors over display-state timers. Re-baseline uses these same rules.
 
 Open operations cases have a four-hour review deadline from creation. If unresolved at that deadline, escalate to the owning team lead and record the next four-hour review deadline. An external recovery handoff requires an accepting owner and case reference; it does not relabel the original refund as successful. Handoffs and escalations are persisted, deduplicated, and auditable. These non-payment task-review targets are case assumptions to replace with agreed operational targets before deployment. Payment processing and visibility deadlines use the mandatory versioned policy profile, not these fixed task-review intervals.
 
 ## Recovery policy detail
-operational-contract.md defines independent lookup retries while UNCERTAIN, provider/account outage handling, finance acceptance deadlines, parking, and backlog monitoring. Safe lookup can continue under manual ownership. No unaccepted financial exception is removed by TTL. A broker acknowledgment does not establish finance ownership. These operational additions do not change mapping_version=0.3 or D01–D09.
+operational-contract.md defines independent lookup retries while UNCERTAIN, provider/account outage handling, finance acceptance deadlines, parking, and backlog monitoring. Safe lookup can continue under manual ownership. No unaccepted financial exception is removed by TTL. A broker acknowledgment does not establish finance ownership. The dictionary remains mapping_version=0.3; the ingestion policy is version 0.5. D01–D09 projection outputs are unchanged. Record both versions in audit.
 
 ## Audit and boundaries
-Record raw event, source identity, revision, outcome, mapping_version, before/after facts, triggering decision, projection, flags, timer interval, task references, and corrective evidence. Restrict raw events and reconciliation details to authorized staff.
+Record raw event, source identity, revision, outcome, mapping_version, before/after facts, ingestion_policy_version, triggering decision, projection, flags, timer interval, task references, and corrective evidence. Restrict raw events and reconciliation details to authorized staff.
 
 Separating dimensions preserves meaning but adds aggregation and operational responsibilities. A single shared status is suitable only where object and completion conditions genuinely coincide. Source contract verification, retention, authentication, and production service objectives remain deployment prerequisites.
 

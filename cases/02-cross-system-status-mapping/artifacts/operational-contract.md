@@ -3,7 +3,7 @@
 Series: Inside the Spec – Real Scenarios. Working Artifacts. Decisions That Matter.  
 Case: 02  
 Author: Yulia Melekhova  
-Version: 0.4  
+Version: 0.5  
 Language: en  
 Status: Draft
 
@@ -21,9 +21,11 @@ Durations use the pinned calendar version and timezone. Business durations count
 
 Keep late-outcome subscriptions active after REFUND_ISSUED. Poll at the pinned policy interval when webhooks are missing or delayed. Onboarding must define the provider's late-outcome/replay horizon and retention for linkage and deduplication; absence of that agreement blocks production use. An expiry does not prove bank receipt. Late events beyond a configured horizon create an incident and follow identity validation and exception handling; they are not silently dropped.
 
-The original 15-minute evidence-wait timer concerns integration/dispatch evidence only, not expected bank completion. It creates a diagnostic task and cannot mark a refund failed. Deduplicate/merge tasks into the current return case so overlapping monitors do not flood operations.
+The 15-minute evidence-wait timer concerns integration/dispatch evidence only. D04 has downstream evidence (PSP known or OMS closed) that presupposes inspection completion; D08 has accepted inspection and makes OMS registration or dispatch due. Neither timer measures physical warehouse work or bank completion. WMS UNKNOWN/PENDING with no downstream evidence uses a pinned returns policy and a returns-operations owner. Illustrative RETURNS_TEST_V1: 24 elapsed hours from first return observation; arrival/inspection deadlines in production require the actual logistics policy. Persist the anchor, policy, and deadline independently of the UI. It creates a diagnostic task and cannot mark a refund failed. Deduplicate/merge tasks into the current return case so overlapping monitors do not flood operations.
 
 ## Transactional Outbox and attempt contract
+Dispatch requires authoritative WMS ACCEPTED, with inspection ID/revision recorded as authorization. UNKNOWN, IN_PROGRESS, and REJECTED cannot authorize a refund. Before an unsent create, check for revoked authorization or a blocking reconciliation case; suspend and investigate if present. This gate cannot recall an already submitted remote request.
+
 In one OMS database transaction, commit the refund instruction, immutable linkage/amount/currency, policy reference, and outbox row. A unique business instruction ID prevents creating another instruction for the same one-refund operation.
 
 Store instruction_id, outbox_id, return_id, internal_refund_id, original_payment_id, provider, merchant_account, idempotency_key, request_hash, state, lease_token, lease_until, attempt_count, first_attempt_at, next_attempt_at, dedupe_valid_until, provider_refund_id, and acknowledged_at. provider_refund_id starts absent; a native provider ID need not equal the internal F-204. A verified adapter binding connects them. Append each attempt's attempt_id, start/end time, provider_request_id if available, response/error classification, and response digest. Increment attempt_count durably before each create call, not after its result. Queries have separate query-attempt records and do not create another instruction.
@@ -52,7 +54,7 @@ A valid linked provider object resolves dispatch uncertainty by recording its na
 ## Financial exception boundary
 Re-baseline changes an observation in the read projection; it is not a money movement, accounting reversal, or permission to recover money from a customer. Do not block recording truthful source evidence merely because ERP is unavailable.
 
-Atomically with a financially consequential correction, persist a financial_exception_id and durable finance-outbox record. A correction is consequential when it changes an implicated return/inspection outcome while a PSP object exists or a dispatch attempt may have reached PSP, changes a PSP outcome, or addresses a money-related conflict. Normal accepted late PSP FAILED also creates this record. Use (return_id, triggering_ingestion_or_resolution_id, exception_kind) for idempotence. Include original payment/refund IDs, instruction and attempt references, amount/currency, before/after facts and revisions, provider evidence references, and reconciliation case ID. It records exposure for assessment, not an asserted loss or receivable.
+Atomically with a financially consequential correction, persist a financial_exception_id and durable finance-outbox record. A correction is consequential when it changes an implicated return/inspection outcome while a PSP object exists or a dispatch attempt may have reached PSP, changes a PSP outcome, or addresses a money-related conflict. Normal accepted late PSP FAILED also creates this record. Every money-related D02 trigger creates an assessment handoff, including WMS REJECTED with PSP FAILED. FAILED alone does not establish no previous issuance or no financial effects; finance may return a documented no-posting decision. Nonfinancial D02 with no PSP object or possible dispatch requires source reconciliation only. Use (return_id, triggering_ingestion_or_resolution_id, exception_kind) for idempotence. Include original payment/refund IDs, instruction and attempt references, amount/currency, before/after facts and revisions, provider evidence references, and reconciliation case ID. It records exposure for assessment, not an asserted loss or receivable.
 
 Finance operations owns the receiving case. The receiving ledger/ERP process determines whether journal entries or an adjustment are needed from accounting evidence and its posting rules. It returns a case acknowledgment with ledger references where applicable, or a documented no-posting decision. All receiving actions must be idempotent. The projection layer does not choose debit/credit accounts or initiate a charge or collection.
 
