@@ -10,7 +10,7 @@ One Status, Three Systems, Different Meanings
 
 Учебный возврат товара между OMS, WMS и PSP. Общие технические артефакты на английском; русские пояснения помогают их читать.
 
-Редакционная версия 0.5.1: посты и PDF EN/RU завершаются утверждением. Техническая спецификация v0.5 не менялась.
+Редакционная версия 0.5.2: в русских посте, PDF и пояснениях сохранены английские идентификаторы статусов. Финал остается утверждением. Техническая спецификация v0.5 не менялась.
 
 ## Материалы публикации
 
@@ -42,3 +42,7 @@ One Status, Three Systems, Different Meanings
 [All cases](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/README.md) · [Yulia Melekhova on LinkedIn](https://www.linkedin.com/in/yuliamelekhova)
 
 [PDF export validation](https://github.com/YuliaMelekhova/inside-the-spec/blob/main/cases/02-cross-system-status-mapping/artifacts/pdf-validation.md)
+
+## Русские обозначения статусов
+
+В русских материалах системные статусы сохраняют точные английские идентификаторы рядом с переводом. Для одинаковых enum у разных фактов указано поле. Таблицы показывают идентификатор и пояснение в одной строке; UI-тексты и документирующие их enum разделены. Редакционная правка не меняет контракт и ожидаемые результаты сценариев.
